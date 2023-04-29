@@ -50,6 +50,7 @@ namespace Client_project
         private void button1_Click(object sender, EventArgs e)
         {
             clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            //Getting the input values from the input prompts on the GUI
             string ipVar = ip_field.Text;
             string portNumVar = port_field.Text;
             string usernameVar = username_field.Text;
@@ -77,12 +78,12 @@ namespace Client_project
                     }
 
                     //Concatenating the hashed password with the username and channel input
-                    string concatanatedHashString = hashedString + "|aralik|" + usernameVar + "|aralik|" + channelVar;
+                    string concatanatedHashString = hashedString + "|ar|" + usernameVar + "|ar|" + channelVar;
 
                     //Encrypting the data using RSA public key
                     byte[] concatanatedHashBytes = Encoding.UTF8.GetBytes((string) concatanatedHashString);
 
-                    byte[] encryptedBytes = new byte[0];
+                    byte[] encryptedBytes = new byte[2048];
                     using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
                     {
                         rsa.FromXmlString(RSA3072PublicEncryptionKey);

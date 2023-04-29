@@ -84,22 +84,34 @@ namespace Server
                     //socketList.Add(serverSocket.Accept());
                     Socket newClient = serverSocket.Accept();
                     //before accepting the connection, server needs to get the username-password info, decrypt them and do the necessary comparisons
-                    Byte[] firstBuffer = new Byte[10000000];
+                    Byte[] firstBuffer = new Byte[2048];
                     newClient.Receive(firstBuffer);
                     //string acceptingInfoString = Encoding.UTF8.GetString(firstBuffer);
                     //acceptingInfoString = acceptingInfoString.Substring(0, acceptingInfoString.IndexOf("\0"));
-
+                    string araba = Encoding.UTF8.GetString(firstBuffer);
+                    logs.AppendText(araba);
                     //Decrypting the received RSA encrypted data
-                    byte[] decryptedBytes;
-                    using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
-                    {
-                       
-                        rsa.FromXmlString(RSA3072PrivateEncryptionKey);
+                    byte[] decryptedBytes = new byte[2048];
+                    //using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
+                    //{
 
-                        decryptedBytes = rsa.Decrypt(firstBuffer, true);
+                    //  rsa.FromXmlString(RSA3072PrivateEncryptionKey);
+
+                    //decryptedBytes = rsa.Decrypt(firstBuffer, true);
+                    //}
+                    RSACryptoServiceProvider rsaObject = new RSACryptoServiceProvider();
+                    rsaObject.FromXmlString(RSA3072PrivateEncryptionKey);
+                    try
+                    {
+                        decryptedBytes = rsaObject.Decrypt(firstBuffer, true);
+                    }
+                    catch (Exception e)
+                    {
+                        logs.AppendText(e.Message);
+                      
                     }
                     string decryptedString = Encoding.UTF8.GetString(decryptedBytes);
-                    string[] tokens = decryptedString.Split(new[] { "|aralik|" }, StringSplitOptions.None);
+                    string[] tokens = decryptedString.Split(new[] { "|ar|" }, StringSplitOptions.None);
 
                     string hashedPassword = tokens[0];
                     string usernameVar = tokens[1];
