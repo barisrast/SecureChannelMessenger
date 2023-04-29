@@ -7,3 +7,14 @@ d:\users\suuser\documents\visual studio 2015\Projects\Client_project\Client_proj
 d:\users\suuser\documents\visual studio 2015\Projects\Client_project\Client_project\obj\Debug\Client_project.csproj.GenerateResource.Cache
 d:\users\suuser\documents\visual studio 2015\Projects\Client_project\Client_project\obj\Debug\Client_project.exe
 d:\users\suuser\documents\visual studio 2015\Projects\Client_project\Client_project\obj\Debug\Client_project.pdb
+C:\Users\baris\OneDrive\Desktop\cs432-project\Client-project\Client_project\obj\Debug\Client_project.csproj.AssemblyReference.cache
+C:\Users\baris\OneDrive\Desktop\cs432-project\Client-project\Client_project\obj\Debug\Client_project.csproj.SuggestedBindingRedirects.cache
+C:\Users\baris\OneDrive\Desktop\cs432-project\Client-project\Client_project\obj\Debug\Client_project.Form1.resources
+C:\Users\baris\OneDrive\Desktop\cs432-project\Client-project\Client_project\obj\Debug\Client_project.Properties.Resources.resources
+C:\Users\baris\OneDrive\Desktop\cs432-project\Client-project\Client_project\obj\Debug\Client_project.csproj.GenerateResource.cache
+C:\Users\baris\OneDrive\Desktop\cs432-project\Client-project\Client_project\obj\Debug\Client_project.csproj.CoreCompileInputs.cache
+C:\Users\baris\OneDrive\Desktop\cs432-project\Client-project\Client_project\obj\Debug\Client_project.exe
+C:\Users\baris\OneDrive\Desktop\cs432-project\Client-project\Client_project\obj\Debug\Client_project.pdb
+C:\Users\baris\OneDrive\Desktop\cs432-project\Client-project\Client_project\bin\Debug\Client_project.exe.config
+C:\Users\baris\OneDrive\Desktop\cs432-project\Client-project\Client_project\bin\Debug\Client_project.exe
+C:\Users\baris\OneDrive\Desktop\cs432-project\Client-project\Client_project\bin\Debug\Client_project.pdb

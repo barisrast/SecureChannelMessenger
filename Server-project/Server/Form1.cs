@@ -29,6 +29,21 @@ namespace Server
             Control.CheckForIllegalCrossThreadCalls = false;
             this.FormClosing += new FormClosingEventHandler(Form1_FormClosing);
             InitializeComponent();
+            //Reading the private RSA key which will be used for encryption purposes
+            string RSA3072PrivateEncryptionKey;
+            using (System.IO.StreamReader fileReader =
+            new System.IO.StreamReader("server_enc_dec_pub_prv.txt"))
+            {
+                RSA3072PrivateEncryptionKey = fileReader.ReadLine();
+            }
+
+            //Reading the private RSA key which will be used for signature verification purposes
+            string RSA3072PrivateVerificationKey;
+            using (System.IO.StreamReader fileReader =
+            new System.IO.StreamReader("server_signing_verification_pub_prv.txt"))
+            {
+                RSA3072PrivateVerificationKey = fileReader.ReadLine();
+            }
         }
 
         private void listenButton_Click(object sender, EventArgs e)
@@ -135,30 +150,7 @@ namespace Server
             }
         }
 
-        private void connectButton_Click(object sender, EventArgs e)
-        {
-            remoteSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            string IP = ipAdress.Text;
-            int port;
-            if (Int32.TryParse(portNum.Text, out port))
-            {
-                try
-                {
-                    remoteSocket.Connect(IP, port);
-                    remoteConnected = true;
-                    connectButton.Enabled = false;
-                    logs.AppendText("Connected to remote math server\n");
-                }
-                catch
-                {
-                    logs.AppendText("Could not connect to remote server\n");
-                }
-            }
-            else
-            {
-                logs.AppendText("Check the port\n");
-            }
-        }
+
 
         private void Form1_FormClosing(object sender, System.ComponentModel.CancelEventArgs e)
         {
