@@ -12,6 +12,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Security.Cryptography;
+using System.IO;
 
 namespace Server
 {
@@ -103,6 +104,15 @@ namespace Server
                     string hashedPassword = tokens[0];
                     string usernameVar = tokens[1];
                     string channelVar = tokens[2];
+
+                    bool usernameExists = false;
+                    foreach (string line in File.ReadLines(@"../../username-db.txt", Encoding.UTF8))
+                    {
+                        if (line == usernameVar)
+                        {
+                            usernameExists = true;
+                        }
+                    }
 
 
 

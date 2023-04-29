@@ -41,15 +41,19 @@
             this.password_field = new System.Windows.Forms.TextBox();
             this.label5 = new System.Windows.Forms.Label();
             this.disconnect_button = new System.Windows.Forms.Button();
+            this.textBox1 = new System.Windows.Forms.TextBox();
+            this.textBox2 = new System.Windows.Forms.TextBox();
+            this.label6 = new System.Windows.Forms.Label();
+            this.label7 = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // connect_button
             // 
-            this.connect_button.Location = new System.Drawing.Point(42, 187);
+            this.connect_button.Location = new System.Drawing.Point(201, 72);
             this.connect_button.Name = "connect_button";
             this.connect_button.Size = new System.Drawing.Size(100, 35);
             this.connect_button.TabIndex = 0;
-            this.connect_button.Text = "Connect";
+            this.connect_button.Text = "Register";
             this.connect_button.UseVisualStyleBackColor = true;
             this.connect_button.Click += new System.EventHandler(this.button1_Click);
             // 
@@ -149,7 +153,7 @@
             // disconnect_button
             // 
             this.disconnect_button.BackColor = System.Drawing.Color.IndianRed;
-            this.disconnect_button.Location = new System.Drawing.Point(42, 240);
+            this.disconnect_button.Location = new System.Drawing.Point(260, 290);
             this.disconnect_button.Name = "disconnect_button";
             this.disconnect_button.Size = new System.Drawing.Size(100, 35);
             this.disconnect_button.TabIndex = 15;
@@ -157,11 +161,48 @@
             this.disconnect_button.UseVisualStyleBackColor = false;
             this.disconnect_button.Click += new System.EventHandler(this.disconnect_button_Click);
             // 
+            // textBox1
+            // 
+            this.textBox1.Location = new System.Drawing.Point(73, 216);
+            this.textBox1.Name = "textBox1";
+            this.textBox1.Size = new System.Drawing.Size(100, 20);
+            this.textBox1.TabIndex = 16;
+            // 
+            // textBox2
+            // 
+            this.textBox2.Location = new System.Drawing.Point(73, 242);
+            this.textBox2.Name = "textBox2";
+            this.textBox2.Size = new System.Drawing.Size(100, 20);
+            this.textBox2.TabIndex = 17;
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Location = new System.Drawing.Point(11, 219);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(68, 15);
+            this.label6.TabIndex = 18;
+            this.label6.Text = "Username:";
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Location = new System.Drawing.Point(4, 245);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(64, 15);
+            this.label7.TabIndex = 19;
+            this.label7.Text = "Password:";
+            
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(579, 367);
+            this.Controls.Add(this.label7);
+            this.Controls.Add(this.label6);
+            this.Controls.Add(this.textBox2);
+            this.Controls.Add(this.textBox1);
             this.Controls.Add(this.disconnect_button);
             this.Controls.Add(this.label5);
             this.Controls.Add(this.password_field);
@@ -197,6 +238,10 @@
         private System.Windows.Forms.TextBox password_field;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.Button disconnect_button;
+        private System.Windows.Forms.TextBox textBox1;
+        private System.Windows.Forms.TextBox textBox2;
+        private System.Windows.Forms.Label label6;
+        private System.Windows.Forms.Label label7;
     }
 }
 
