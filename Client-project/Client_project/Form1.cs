@@ -11,6 +11,7 @@ using System.Net.Sockets;
 using System.Windows.Forms;
 using System.Threading;
 using System.Security.Cryptography;
+using System.IO;
 
 
 namespace Client_project
@@ -45,12 +46,6 @@ namespace Client_project
             }
 
         }
-        private void send_message(string messageString)
-        {
-            Byte[] buffer = new Byte[10000000];
-            buffer = Encoding.Default.GetBytes(messageString);
-            clientSocket.Send(buffer);
-        }
 
         private void button1_Click(object sender, EventArgs e)
         {
@@ -60,14 +55,14 @@ namespace Client_project
             string usernameVar = username_field.Text;
             string passwordVar = password_field.Text;
             string channelVar = channel_combobox.SelectedItem.ToString();
-            int port_num;
+            int portNumInt = int.Parse(portNumVar);
 
 
-            if (Int32.TryParse(portNumVar, out port_num))
+            if (Int32.TryParse(portNumVar, out portNumInt))
             {
                 try
                 {
-                    clientSocket.Connect(ipVar, port_num);
+                    clientSocket.Connect(ipVar, portNumInt);
                     connect_button.Enabled = false;
                     connected = true;
                     logs.AppendText("Connected to the server. \n");
@@ -133,7 +128,7 @@ namespace Client_project
                 catch {
                     if (!terminating)
                     {
-                        logs.AppendText("Connection has lost with the server. \n");
+                        logs.AppendText("Connection has been lost with the server. \n");
                     }
 
                     clientSocket.Close();
@@ -167,6 +162,5 @@ namespace Client_project
         }
 
 
-   
     }
 }

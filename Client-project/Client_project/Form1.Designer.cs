@@ -41,10 +41,12 @@
             this.password_field = new System.Windows.Forms.TextBox();
             this.label5 = new System.Windows.Forms.Label();
             this.disconnect_button = new System.Windows.Forms.Button();
-            this.textBox1 = new System.Windows.Forms.TextBox();
-            this.textBox2 = new System.Windows.Forms.TextBox();
+            this.username_login_field = new System.Windows.Forms.TextBox();
+            this.password_login_field = new System.Windows.Forms.TextBox();
             this.label6 = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
+            this.label8 = new System.Windows.Forms.Label();
+            this.login_button = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // connect_button
@@ -153,7 +155,7 @@
             // disconnect_button
             // 
             this.disconnect_button.BackColor = System.Drawing.Color.IndianRed;
-            this.disconnect_button.Location = new System.Drawing.Point(260, 290);
+            this.disconnect_button.Location = new System.Drawing.Point(260, 309);
             this.disconnect_button.Name = "disconnect_button";
             this.disconnect_button.Size = new System.Drawing.Size(100, 35);
             this.disconnect_button.TabIndex = 15;
@@ -161,24 +163,24 @@
             this.disconnect_button.UseVisualStyleBackColor = false;
             this.disconnect_button.Click += new System.EventHandler(this.disconnect_button_Click);
             // 
-            // textBox1
+            // username_login_field
             // 
-            this.textBox1.Location = new System.Drawing.Point(73, 216);
-            this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(100, 20);
-            this.textBox1.TabIndex = 16;
+            this.username_login_field.Location = new System.Drawing.Point(82, 242);
+            this.username_login_field.Name = "username_login_field";
+            this.username_login_field.Size = new System.Drawing.Size(100, 20);
+            this.username_login_field.TabIndex = 16;
             // 
-            // textBox2
+            // password_login_field
             // 
-            this.textBox2.Location = new System.Drawing.Point(73, 242);
-            this.textBox2.Name = "textBox2";
-            this.textBox2.Size = new System.Drawing.Size(100, 20);
-            this.textBox2.TabIndex = 17;
+            this.password_login_field.Location = new System.Drawing.Point(82, 268);
+            this.password_login_field.Name = "password_login_field";
+            this.password_login_field.Size = new System.Drawing.Size(100, 20);
+            this.password_login_field.TabIndex = 17;
             // 
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(11, 219);
+            this.label6.Location = new System.Drawing.Point(12, 242);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(68, 15);
             this.label6.TabIndex = 18;
@@ -187,22 +189,42 @@
             // label7
             // 
             this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(4, 245);
+            this.label7.Location = new System.Drawing.Point(12, 271);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(64, 15);
             this.label7.TabIndex = 19;
             this.label7.Text = "Password:";
-            
+            // 
+            // label8
+            // 
+            this.label8.AutoSize = true;
+            this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 20.6F);
+            this.label8.Location = new System.Drawing.Point(35, 187);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(113, 39);
+            this.label8.TabIndex = 20;
+            this.label8.Text = "Log-in";
+            // 
+            // login_button
+            // 
+            this.login_button.Location = new System.Drawing.Point(201, 251);
+            this.login_button.Name = "login_button";
+            this.login_button.Size = new System.Drawing.Size(100, 35);
+            this.login_button.TabIndex = 21;
+            this.login_button.Text = "Log-in";
+            this.login_button.UseVisualStyleBackColor = true;
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(579, 367);
+            this.Controls.Add(this.login_button);
+            this.Controls.Add(this.label8);
             this.Controls.Add(this.label7);
             this.Controls.Add(this.label6);
-            this.Controls.Add(this.textBox2);
-            this.Controls.Add(this.textBox1);
+            this.Controls.Add(this.password_login_field);
+            this.Controls.Add(this.username_login_field);
             this.Controls.Add(this.disconnect_button);
             this.Controls.Add(this.label5);
             this.Controls.Add(this.password_field);
@@ -238,10 +260,12 @@
         private System.Windows.Forms.TextBox password_field;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.Button disconnect_button;
-        private System.Windows.Forms.TextBox textBox1;
-        private System.Windows.Forms.TextBox textBox2;
+        private System.Windows.Forms.TextBox username_login_field;
+        private System.Windows.Forms.TextBox password_login_field;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.Label label8;
+        private System.Windows.Forms.Button login_button;
     }
 }
 

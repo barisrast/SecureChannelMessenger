@@ -45,7 +45,7 @@ namespace Server
             //Reading the private RSA key which will be used for signature verification purposes
             
             using (System.IO.StreamReader fileReader =
-            new System.IO.StreamReader("server_signing_verification_pub_prv.txt"))
+            new System.IO.StreamReader("server_sign_verify_pub_prv.txt"))
             {
                 RSA3072PrivateVerificationKey = fileReader.ReadLine();
             }
@@ -104,6 +104,7 @@ namespace Server
                     string hashedPassword = tokens[0];
                     string usernameVar = tokens[1];
                     string channelVar = tokens[2];
+                    logs.AppendText(hashedPassword + usernameVar + channelVar);
 
                     bool usernameExists = false;
                     foreach (string line in File.ReadLines(@"../../username-db.txt", Encoding.UTF8))
@@ -112,6 +113,40 @@ namespace Server
                         {
                             usernameExists = true;
                         }
+                    }
+                    Byte[] usernameResponseBuffer = new Byte[64];
+                    string usernameResponseString = "";
+
+                    if (usernameExists)
+                    {
+                        logs.AppendText(usernameVar + " this username is already registered!\n");
+
+                        usernameResponseString = "no";
+                        usernameResponseBuffer = Encoding.Default.GetBytes(usernameResponseString);
+                        newClient.Send(usernameResponseBuffer);
+
+                    }
+                    else
+                    {
+                        usernameResponseString = "yes";
+                        usernameResponseBuffer = Encoding.Default.GetBytes(usernameResponseString);
+                        newClient.Send(usernameResponseBuffer);
+
+                        logs.AppendText(usernameVar + " has registered!\n");
+
+                        DateTime now = DateTime.Now;
+                        now.ToString("F");
+
+                        string finalLine = usernameVar + "||" + hashedPassword + "||" + channelVar + "||" + now;
+
+                        using (StreamWriter file = new StreamWriter("../../username-db.txt", append: true))
+                        {
+                            file.WriteLine(finalLine);
+                        }
+
+                        Thread receiveThread;
+                        receiveThread = new Thread(new ThreadStart(Receive));
+                        receiveThread.Start();
                     }
 
 
@@ -165,7 +200,8 @@ namespace Server
                         {
                             remoteConnected = false;
                             remoteSocket = null;
-                            connectButton.Enabled = true;
+                            listenButton.Enabled = true;
+                            
                         }
                     }
                     else
