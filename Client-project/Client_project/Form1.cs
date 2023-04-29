@@ -10,6 +10,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Windows.Forms;
 using System.Threading;
+using System.Security.Cryptography;
 
 
 namespace Client_project
@@ -19,6 +20,8 @@ namespace Client_project
         bool terminating = false;
         bool connected = false;
         Socket clientSocket;
+        string RSA3072PublicEncryptionKey;
+        string RSA3072PublicVerificationKey;
         public Form1()
         {
             Control.CheckForIllegalCrossThreadCalls = false;
@@ -26,7 +29,7 @@ namespace Client_project
             InitializeComponent();
 
             //Reading the public RSA key which will be used for encryption purposes
-            string RSA3072PublicEncryptionKey;
+            
             using (System.IO.StreamReader fileReader =
             new System.IO.StreamReader("server_enc_dec_pub.txt"))
             {
@@ -34,13 +37,19 @@ namespace Client_project
             }
 
             //Reading the public RSA key which will be used for signature verification purposes
-            string RSA3072PublicVerificationKey;
+            
             using (System.IO.StreamReader fileReader =
             new System.IO.StreamReader("server_sign_verify_pub.txt"))
             {
                 RSA3072PublicVerificationKey = fileReader.ReadLine();
             }
 
+        }
+        private void send_message(string messageString)
+        {
+            Byte[] buffer = new Byte[10000000];
+            buffer = Encoding.Default.GetBytes(messageString);
+            clientSocket.Send(buffer);
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -62,6 +71,36 @@ namespace Client_project
                     connect_button.Enabled = false;
                     connected = true;
                     logs.AppendText("Connected to the server. \n");
+
+                    //The part below takes the SHA-512 hash of the password
+                    byte[] passwordBytes = Encoding.UTF8.GetBytes(passwordVar);
+                    string hashedString;
+                    using (SHA512 sha512 = SHA512.Create())
+                    {
+                        byte[] hashedBytes = sha512.ComputeHash(passwordBytes);
+                        hashedString = Convert.ToBase64String(passwordBytes);
+                    }
+
+                    //Concatenating the hashed password with the username and channel input
+                    string concatanatedHashString = hashedString + "|aralik|" + usernameVar + "|aralik|" + channelVar;
+
+                    //Encrypting the data using RSA public key
+                    byte[] concatanatedHashBytes = Encoding.UTF8.GetBytes((string) concatanatedHashString);
+
+                    byte[] encryptedBytes = new byte[0];
+                    using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
+                    {
+                        rsa.FromXmlString(RSA3072PublicEncryptionKey);
+                        try
+                        {
+                            encryptedBytes = rsa.Encrypt(concatanatedHashBytes, true);
+                        }
+                        catch(Exception ex)
+                        {
+                            logs.AppendText(ex.ToString());
+                        }
+                    }
+                    clientSocket.Send(encryptedBytes);
 
                     Thread receiveThread = new Thread(new ThreadStart(Receive));
                     receiveThread.Start();
@@ -126,5 +165,8 @@ namespace Client_project
             connect_button.BackColor = SystemColors.Control;
             disconnect_button.BackColor = SystemColors.Control;
         }
+
+
+   
     }
 }
