@@ -1,0 +1,9 @@
+d:\users\suuser\documents\visual studio 2015\Projects\Client_project\Client_project\bin\Debug\Client_project.exe.config
+d:\users\suuser\documents\visual studio 2015\Projects\Client_project\Client_project\bin\Debug\Client_project.exe
+d:\users\suuser\documents\visual studio 2015\Projects\Client_project\Client_project\bin\Debug\Client_project.pdb
+d:\users\suuser\documents\visual studio 2015\Projects\Client_project\Client_project\obj\Debug\Client_project.csprojResolveAssemblyReference.cache
+d:\users\suuser\documents\visual studio 2015\Projects\Client_project\Client_project\obj\Debug\Client_project.Form1.resources
+d:\users\suuser\documents\visual studio 2015\Projects\Client_project\Client_project\obj\Debug\Client_project.Properties.Resources.resources
+d:\users\suuser\documents\visual studio 2015\Projects\Client_project\Client_project\obj\Debug\Client_project.csproj.GenerateResource.Cache
+d:\users\suuser\documents\visual studio 2015\Projects\Client_project\Client_project\obj\Debug\Client_project.exe
+d:\users\suuser\documents\visual studio 2015\Projects\Client_project\Client_project\obj\Debug\Client_project.pdb
