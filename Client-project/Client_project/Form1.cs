@@ -23,6 +23,11 @@ namespace Client_project
         Socket clientSocket;
         string RSA3072PublicEncryptionKey;
         string RSA3072PublicVerificationKey;
+        static string generateHexStringFromByteArray(byte[] input)
+        {
+            string hexString = BitConverter.ToString(input);
+            return hexString.Replace("-", "");
+        }
         public Form1()
         {
             Control.CheckForIllegalCrossThreadCalls = false;
@@ -69,21 +74,24 @@ namespace Client_project
                     logs.AppendText("Connected to the server. \n");
 
                     //The part below takes the SHA-512 hash of the password
-                    byte[] passwordBytes = Encoding.UTF8.GetBytes(passwordVar);
+                    byte[] passwordBytes = Encoding.Default.GetBytes(passwordVar);
                     string hashedString;
                     using (SHA512 sha512 = SHA512.Create())
                     {
                         byte[] hashedBytes = sha512.ComputeHash(passwordBytes);
-                        hashedString = Convert.ToBase64String(passwordBytes);
+                        //hashedString = generateHexStringFromByteArray(hashedBytes);
+                        hashedString = Encoding.UTF8.GetString(hashedBytes);
+                        //hashedString = Convert.ToBase64String(passwordBytes);
                     }
+
 
                     //Concatenating the hashed password with the username and channel input
                     string concatanatedHashString = hashedString + "|ar|" + usernameVar + "|ar|" + channelVar;
 
                     //Encrypting the data using RSA public key
-                    byte[] concatanatedHashBytes = Encoding.UTF8.GetBytes((string) concatanatedHashString);
+                    byte[] concatanatedHashBytes = Encoding.UTF8.GetBytes(concatanatedHashString);
 
-                    byte[] encryptedBytes = new byte[2048];
+                    byte[] encryptedBytes = null;
                     using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
                     {
                         rsa.FromXmlString(RSA3072PublicEncryptionKey);
@@ -122,7 +130,7 @@ namespace Client_project
                     Byte[] buffer = new Byte[64];
                     clientSocket.Receive(buffer);
 
-                    string message = Encoding.Default.GetString(buffer);
+                    string message = Encoding.UTF8.GetString(buffer);
                     message = message.Substring(0, message.IndexOf("\0"));
                     logs.AppendText(message + "\n");
                 }

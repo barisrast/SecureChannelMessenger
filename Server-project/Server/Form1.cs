@@ -84,26 +84,25 @@ namespace Server
                     //socketList.Add(serverSocket.Accept());
                     Socket newClient = serverSocket.Accept();
                     //before accepting the connection, server needs to get the username-password info, decrypt them and do the necessary comparisons
-                    Byte[] firstBuffer = new Byte[2048];
-                    newClient.Receive(firstBuffer);
+                    //Byte[] firstBuffer = new Byte[256];
+                    //newClient.Receive(firstBuffer);
+                    Byte[] firstBuffer = new Byte[256];
+                    int receivedDataLength = newClient.Receive(firstBuffer);
+                    byte[] receivedData = new byte[receivedDataLength];
+                    Array.Copy(firstBuffer, receivedData, receivedDataLength);
+
                     //string acceptingInfoString = Encoding.UTF8.GetString(firstBuffer);
                     //acceptingInfoString = acceptingInfoString.Substring(0, acceptingInfoString.IndexOf("\0"));
-                    string araba = Encoding.UTF8.GetString(firstBuffer);
-                    logs.AppendText(araba);
+                    //string araba = Encoding.UTF8.GetString(receivedData);
+                    //logs.AppendText(araba);
                     //Decrypting the received RSA encrypted data
-                    byte[] decryptedBytes = new byte[2048];
-                    //using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
-                    //{
+                    byte[] decryptedBytes = null;
 
-                    //  rsa.FromXmlString(RSA3072PrivateEncryptionKey);
-
-                    //decryptedBytes = rsa.Decrypt(firstBuffer, true);
-                    //}
                     RSACryptoServiceProvider rsaObject = new RSACryptoServiceProvider();
                     rsaObject.FromXmlString(RSA3072PrivateEncryptionKey);
                     try
                     {
-                        decryptedBytes = rsaObject.Decrypt(firstBuffer, true);
+                        decryptedBytes = rsaObject.Decrypt(receivedData, true);
                     }
                     catch (Exception e)
                     {
@@ -134,14 +133,14 @@ namespace Server
                         logs.AppendText(usernameVar + " this username is already registered!\n");
 
                         usernameResponseString = "no";
-                        usernameResponseBuffer = Encoding.Default.GetBytes(usernameResponseString);
+                        usernameResponseBuffer = Encoding.UTF8.GetBytes(usernameResponseString);
                         newClient.Send(usernameResponseBuffer);
 
                     }
                     else
                     {
                         usernameResponseString = "yes";
-                        usernameResponseBuffer = Encoding.Default.GetBytes(usernameResponseString);
+                        usernameResponseBuffer = Encoding.UTF8.GetBytes(usernameResponseString);
                         newClient.Send(usernameResponseBuffer);
 
                         logs.AppendText(usernameVar + " has registered!\n");
