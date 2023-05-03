@@ -15,9 +15,11 @@ using System.Security.Cryptography;
 using System.IO;
 
 namespace Server
+
 {
     public partial class Form1 : Form
     {
+
         bool terminating = false;
         bool listening = false;
         bool remoteConnected = false;
@@ -84,12 +86,12 @@ namespace Server
                     //socketList.Add(serverSocket.Accept());
                     Socket newClient = serverSocket.Accept();
                     //before accepting the connection, server needs to get the username-password info, decrypt them and do the necessary comparisons
+                    Byte[] receivedData = new Byte[384];
+                    newClient.Receive(receivedData);
                     //Byte[] firstBuffer = new Byte[256];
-                    //newClient.Receive(firstBuffer);
-                    Byte[] firstBuffer = new Byte[256];
-                    int receivedDataLength = newClient.Receive(firstBuffer);
-                    byte[] receivedData = new byte[receivedDataLength];
-                    Array.Copy(firstBuffer, receivedData, receivedDataLength);
+                    //int receivedDataLength = newClient.Receive(firstBuffer);
+                    //byte[] receivedData = new byte[receivedDataLength];
+                    //Array.Copy(firstBuffer, receivedData, receivedDataLength);
 
                     //string acceptingInfoString = Encoding.UTF8.GetString(firstBuffer);
                     //acceptingInfoString = acceptingInfoString.Substring(0, acceptingInfoString.IndexOf("\0"));
@@ -98,6 +100,7 @@ namespace Server
                     //Decrypting the received RSA encrypted data
                     byte[] decryptedBytes = null;
 
+                    
                     RSACryptoServiceProvider rsaObject = new RSACryptoServiceProvider();
                     rsaObject.FromXmlString(RSA3072PrivateEncryptionKey);
                     try
@@ -109,37 +112,42 @@ namespace Server
                         logs.AppendText(e.Message);
                       
                     }
+                  
                     string decryptedString = Encoding.UTF8.GetString(decryptedBytes);
                     string[] tokens = decryptedString.Split(new[] { "|ar|" }, StringSplitOptions.None);
 
                     string hashedPassword = tokens[0];
                     string usernameVar = tokens[1];
                     string channelVar = tokens[2];
-                    logs.AppendText(hashedPassword + usernameVar + channelVar);
+                    //logs.AppendText(hashedPassword + usernameVar + channelVar);
 
                     bool usernameExists = false;
                     foreach (string line in File.ReadLines(@"../../username-db.txt", Encoding.UTF8))
                     {
-                        if (line == usernameVar)
+                        string[] databaseToken = line.Split(new[] { "||" }, StringSplitOptions.None);
+                        string usernameDatabase = databaseToken[0];
+                        logs.AppendText("username tokeni----" + usernameDatabase);
+                       
+                        if (usernameDatabase == usernameVar)
                         {
                             usernameExists = true;
                         }
                     }
-                    Byte[] usernameResponseBuffer = new Byte[64];
+                    Byte[] usernameResponseBuffer = new Byte[384];
                     string usernameResponseString = "";
 
                     if (usernameExists)
                     {
                         logs.AppendText(usernameVar + " this username is already registered!\n");
 
-                        usernameResponseString = "no";
+                        usernameResponseString = "error";
                         usernameResponseBuffer = Encoding.UTF8.GetBytes(usernameResponseString);
                         newClient.Send(usernameResponseBuffer);
 
                     }
                     else
                     {
-                        usernameResponseString = "yes";
+                        usernameResponseString = "success";
                         usernameResponseBuffer = Encoding.UTF8.GetBytes(usernameResponseString);
                         newClient.Send(usernameResponseBuffer);
 
@@ -155,8 +163,9 @@ namespace Server
                             file.WriteLine(finalLine);
                         }
 
-                        Thread receiveThread;
-                        receiveThread = new Thread(new ThreadStart(Receive));
+                        //Thread receiveThread;
+                        //receiveThread = new Thread(new ThreadStart(Receive));
+                        Thread receiveThread = new Thread(() => Receive(newClient));
                         receiveThread.Start();
                     }
 
@@ -180,47 +189,23 @@ namespace Server
             }
         }
 
-        private void Receive()
+        private void Receive(Socket s)
         {
-            Socket s = socketList[socketList.Count - 1];
+            //Socket s = socketList[socketList.Count - 1];
             bool connected = true;
 
             while (connected && !terminating)
             {
                 try
                 {
-                    Byte[] buffer = new Byte[64];
+                    Byte[] buffer = new Byte[384];
                     s.Receive(buffer);
 
-                    string incomingMessage = Encoding.Default.GetString(buffer);
+                    string incomingMessage = Encoding.UTF8.GetString(buffer);
                     incomingMessage = incomingMessage.Substring(0, incomingMessage.IndexOf("\0"));
                     logs.AppendText(incomingMessage + "\n");
-
-                    if (remoteConnected)
-                    {
-                        try
-                        {
-                            remoteSocket.Send(buffer);
-
-                            buffer = new Byte[64];
-                            remoteSocket.Receive(buffer);
-
-                            s.Send(buffer);
-                        }
-                        catch
-                        {
-                            remoteConnected = false;
-                            remoteSocket = null;
-                            listenButton.Enabled = true;
-                            
-                        }
-                    }
-                    else
-                    {
-                        logs.AppendText("Not connected to remote server");
-                    }
-
                 }
+
                 catch
                 {
                     if (!terminating)

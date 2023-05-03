@@ -18,6 +18,7 @@ namespace Client_project
 {
     public partial class Form1 : Form
     {
+
         bool terminating = false;
         bool connected = false;
         Socket clientSocket;
@@ -62,6 +63,7 @@ namespace Client_project
             string passwordVar = password_field.Text;
             string channelVar = channel_combobox.SelectedItem.ToString();
             int portNumInt = int.Parse(portNumVar);
+            logs.AppendText("channel:" + channelVar+"---");
 
 
             if (Int32.TryParse(portNumVar, out portNumInt))
@@ -74,24 +76,27 @@ namespace Client_project
                     logs.AppendText("Connected to the server. \n");
 
                     //The part below takes the SHA-512 hash of the password
-                    byte[] passwordBytes = Encoding.Default.GetBytes(passwordVar);
+                    byte[] passwordBytes = Encoding.UTF8.GetBytes(passwordVar);
+                    //byte[] passwordBytes = Convert.FromBase64String(passwordVar);
                     string hashedString;
                     using (SHA512 sha512 = SHA512.Create())
                     {
                         byte[] hashedBytes = sha512.ComputeHash(passwordBytes);
                         //hashedString = generateHexStringFromByteArray(hashedBytes);
-                        hashedString = Encoding.UTF8.GetString(hashedBytes);
-                        //hashedString = Convert.ToBase64String(passwordBytes);
+                        //hashedString = Encoding.UTF8.GetString(hashedBytes);
+                        hashedString = Convert.ToBase64String(passwordBytes);
                     }
 
 
                     //Concatenating the hashed password with the username and channel input
                     string concatanatedHashString = hashedString + "|ar|" + usernameVar + "|ar|" + channelVar;
+                    //string concatanatedHashString = "denemeString";
 
                     //Encrypting the data using RSA public key
                     byte[] concatanatedHashBytes = Encoding.UTF8.GetBytes(concatanatedHashString);
+                    //byte[] concatanatedHashBytes = Convert.FromBase64String(concatanatedHashString);
 
-                    byte[] encryptedBytes = null;
+                    byte[] encryptedBytes = new byte[384];
                     using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
                     {
                         rsa.FromXmlString(RSA3072PublicEncryptionKey);
@@ -127,7 +132,7 @@ namespace Client_project
             {
                 try
                 {
-                    Byte[] buffer = new Byte[64];
+                    Byte[] buffer = new Byte[384];
                     clientSocket.Receive(buffer);
 
                     string message = Encoding.UTF8.GetString(buffer);
