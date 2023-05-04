@@ -87,26 +87,19 @@ namespace Server
                     //before accepting the connection, server needs to get the username-password info, decrypt them and do the necessary comparisons
                     Byte[] receivedData2 = new Byte[384];
                     newClient.Receive(receivedData2);
-                    //Byte[] firstBuffer = new Byte[256];
-                    //int receivedDataLength = newClient.Receive(firstBuffer);
-                    //byte[] receivedData = new byte[receivedDataLength];
-                    //Array.Copy(firstBuffer, receivedData, receivedDataLength);
-
-                    //string acceptingInfoString = Encoding.UTF8.GetString(firstBuffer);
-                    //acceptingInfoString = acceptingInfoString.Substring(0, acceptingInfoString.IndexOf("\0"));
-                    //string araba = Encoding.UTF8.GetString(receivedData);
-                    //logs.AppendText(araba);
+    
                     //Decrypting the received RSA encrypted data
                     string initialMessage = Encoding.UTF8.GetString(receivedData2);
 
                     if (initialMessage.StartsWith("|enroll|"))
                     {
-
+                        logs.AppendText("User sent enrollment request. \n");
                         byte[] decryptedBytes = null;
                         Byte[] receivedData = new byte[384];
                         newClient.Receive(receivedData);
 
-
+                        string receivedString = generateHexStringFromByteArray(receivedData);
+                        logs.AppendText("This is the encrypted message that contains username/password/course:" + receivedString+"\n");
                         RSACryptoServiceProvider rsaObject = new RSACryptoServiceProvider();
                         rsaObject.FromXmlString(RSA3072PrivateEncryptionKey);
                         try
@@ -118,14 +111,17 @@ namespace Server
                             logs.AppendText(e.Message);
 
                         }
+                        
 
                         string decryptedString = Encoding.UTF8.GetString(decryptedBytes);
+                        logs.AppendText("This is the decrypted version of the previous message: "+decryptedString+"\n");
                         string[] tokens = decryptedString.Split(new[] { "|ar|" }, StringSplitOptions.None);
 
                         string hashedPassword = tokens[0];
                         string usernameVar = tokens[1];
                         string channelVar = tokens[2];
                         //logs.AppendText(hashedPassword + usernameVar + channelVar);
+                        logs.AppendText(usernameVar + " wants to enroll to " + channelVar + ", hash of his password is " + hashedPassword + "\n");
 
                         bool usernameExists = false;
                         foreach (string line in File.ReadLines(@"../../username-db.txt", Encoding.UTF8))
@@ -143,13 +139,15 @@ namespace Server
                         string usernameResponseString = "";
                         if (usernameExists)
                         {
-                            logs.AppendText(usernameVar + " is already registered!\n");
+                            logs.AppendText(usernameVar + " is already registered to this course!\n");
                             usernameResponseString = "error";
+ 
+
                         }
                         else
                         {
                             usernameResponseString = "success";
-                            logs.AppendText(usernameVar + " has registered!\n");
+                            logs.AppendText(usernameVar + " has successfuly registered to "+channelVar+"!\n");
 
                             DateTime now = DateTime.Now;
                             now.ToString("F");
@@ -167,7 +165,8 @@ namespace Server
 
                         // Sign the success/error message
                         byte[] signature = signWithRSA(usernameResponseString, 3072, RSA3072PrivateVerificationKey);
-                        // logs.AppendText(BitConverter.ToString(signature).Replace("-", ""));
+                        string signatureStringTemp = generateHexStringFromByteArray(signature);
+                        logs.AppendText("Signed the "+ usernameResponseString+" message with this signature: "+ signatureStringTemp+"\n");
 
                         byte[] messageBytes = Encoding.UTF8.GetBytes(usernameResponseString);
                         byte[] combinedMessage = new byte[messageBytes.Length + signature.Length];
@@ -182,30 +181,34 @@ namespace Server
 
                         // Send the combined message and signature
                         newClient.Send(combinedMessage);
+                        if(usernameResponseString == "error")
+                        {
+                            logs.AppendText("Closing the connection...");
+                            newClient.Close();
+                            socketList.Remove(newClient);
+                        }
                     }
                     else if (initialMessage.StartsWith("|login|"))
                     {
+                        logs.AppendText("User sent log-in request\n");
                         //getting the username information from the client
                         Byte[] usernameData = new byte[128];
                         newClient.Receive(usernameData);
                         string usernameString = Encoding.UTF8.GetString(usernameData).Trim('\0');
-                        //logs.AppendText("4444444444"+usernameString + "4444444444444");
 
-                        //check if the user has an account in the database
+
+                        //checking if the user has an account in the database
                         bool usernameExists = false;
                         foreach (string line in File.ReadLines(@"../../username-db.txt", Encoding.UTF8))
                         {
                             string[] databaseToken = line.Split(new[] { "||" }, StringSplitOptions.None);
                             string usernameDatabase = databaseToken[0];
-                            //logs.AppendText(usernameDatabase + "==" + usernameString+"\n");
                             if (usernameDatabase == usernameString)
                             {
                                 usernameExists = true;
                                 break;
                             }
                         }
-                        //usernameExists = true;
-                        //usernameString = "try";
 
                         if (usernameExists)
                         {
@@ -215,12 +218,17 @@ namespace Server
                             {
                                 rng.GetBytes(randomNumber);
                             }
+                            string tempRandomVar = generateHexStringFromByteArray(randomNumber);
+                            logs.AppendText("Sending this 128-bit random number to the client for challenge: " + tempRandomVar + "\n");
                             newClient.Send(randomNumber);
 
                             //receiving the hmac from the client
                             byte[] hmacByteBuffer = new byte[384];
                             newClient.Receive(hmacByteBuffer);
                             string hmacByteString2= Encoding.UTF8.GetString(hmacByteBuffer).Trim('\0');
+                            byte[] kedi = Encoding.UTF8.GetBytes(hmacByteString2);
+                            string hmacHexVar = generateHexStringFromByteArray(kedi);
+                            logs.AppendText("The HMAC user sent is this: "+ kedi+ "\n");
                             hmacByteBuffer = Encoding.UTF8.GetBytes(hmacByteString2);
 
                             //getting the hash of the password of the user
@@ -236,34 +244,28 @@ namespace Server
                                     break;
                                 }
                             }
-                            //currentUserPasswordHash = "A44D9C56248A2B9BC170E6D57FAA415FCC1BD688A7AFD0A773717225BBEC8CBC29C2951CB003D64948244795ED779BB7FA3BB8765D6E65B707DB58CF3C88193B";
-                            //logs.AppendText("size of the password ")
                             //applying hmac to see if it is equal to the hmac the client sent
-                            //byte[] xb = Encoding.UTF8.GetBytes(currentUserPasswordHash);
-                            byte[] xb = hexStringToByteArray(currentUserPasswordHash);
-                            logs.AppendText("hash in boyutu: "+xb.Length);
                             string lowerQuarterPassword = currentUserPasswordHash.Substring(0, currentUserPasswordHash.Length / 4);
                             byte[] lowerQuarterBytes = hexStringToByteArray(lowerQuarterPassword);
-                            //byte[] lowerQuarterBytes = Encoding.UTF8.GetBytes(lowerQuarterPassword);
                            
                             
                             string randomString = Encoding.UTF8.GetString(randomNumber);
-                            logs.AppendText(randomString);
                             byte[] hmacPasswordResult = applyHMACwithSHA512(randomString, lowerQuarterBytes);
 
+                            string varVar = generateHexStringFromByteArray(hmacPasswordResult);
+                            logs.AppendText("Server's result of the HMAC of random number: " + varVar + "\n");
                             string hmac1 = Encoding.UTF8.GetString(hmacPasswordResult);
                             string hmac2 = Encoding.UTF8.GetString(hmacByteBuffer);
-                            logs.AppendText("client hmaci===" + hmac2 + "\n");
-                            logs.AppendText("server hmaci===" + hmac1 + "\n");
+                            //logs.AppendText("client hmaci===" + hmac2 + "\n");
+                            //logs.AppendText("server hmaci===" + hmac1 + "\n");
 
-                            //bool isEqualhmac = hmacPasswordResult.SequenceEqual(hmacByteBuffer);
 
+                            //If the HMACs are equal, we understand that the client sent the correct password
                             if (hmac1 == hmac2)
                             {
                                 string successString = "Authentication successful";
-                                //currentUserPasswordHash = "A44D9C56248A2B9BC170E6D57FAA415FCC1BD688A7AFD0A773717225BBEC8CBC29C2951CB003D64948244795ED779BB7FA3BB8765D6E65B707DB58CF3C88193B";
+                                
                                 byte[] hashPasswordBytes = hexStringToByteArray(currentUserPasswordHash);
-                                //logs.AppendText("hash in botutu=====" +hg.Length +"\n");
 
                                 byte[] secondHalfBytes = new byte[32];
                                 Buffer.BlockCopy(hashPasswordBytes, 32, secondHalfBytes, 0, 32);
@@ -273,44 +275,52 @@ namespace Server
 
                                 byte[] aesIVBytes = new byte[16];
                                 Buffer.BlockCopy(secondHalfBytes, 16, aesIVBytes, 0, 16);
-                                byte[] aesBuffer = new byte[384];
+                                byte[] aesBuffer = new byte[256];
                                 logs.AppendText("size of th key ----" + aesKeyBytes.Length.ToString() + "\n");
                                 logs.AppendText("size of th IV ----" + aesIVBytes.Length.ToString() + "\n");
                                 aesBuffer = encryptWithAES128(successString, aesKeyBytes, aesIVBytes);
-                                //string aesIVString2 = Encoding.UTF8.GetString(aesBuffer);
+                                string aesIVString2 = Encoding.UTF8.GetString(aesBuffer);
                                 //logs.AppendText("encrysdgfgfdsgfddfgdfgfpted::" + aesIVString2 + "\n");
+                                logs.AppendText("\n \n");
+                                logs.AppendText("serverdan gelen data: " + aesIVString2 + "\n");
+                                string keys = generateHexStringFromByteArray(aesKeyBytes);
+                                string ivs = generateHexStringFromByteArray(aesIVBytes);
+
+                                logs.AppendText("\n\n" + "this is the key::: " + keys + "\n");
+                                logs.AppendText("\n\n" + "this is the iv::: " + ivs + "\n");
                                 newClient.Send(aesBuffer);
                                 logs.AppendText("Authentication succesful");
                             }
                             else
                             {
                                 string successString = "Authentication unsuccessful";
-                                int midpoint = successString.Length / 2;
+                                byte[] hashPasswordBytes = hexStringToByteArray(currentUserPasswordHash);
 
+                                byte[] secondHalfBytes = new byte[32];
+                                Buffer.BlockCopy(hashPasswordBytes, 32, secondHalfBytes, 0, 32);
 
-                                string upperHalf = currentUserPasswordHash.Substring(midpoint);
-                                int secondMid = upperHalf.Length / 2;
+                                byte[] aesKeyBytes = new byte[16];
+                                Buffer.BlockCopy(secondHalfBytes, 0, aesKeyBytes, 0, 16);
 
-                                string aesKeyString = upperHalf.Substring(0, secondMid);
-                                string aesIVString = upperHalf.Substring(midpoint);
-                                byte[] aesKeyBytes = Encoding.UTF8.GetBytes(aesKeyString);
-                                byte[] aesIVBytes = Encoding.UTF8.GetBytes(aesIVString);
-                                byte[] aesBuffer = new byte[384];
+                                byte[] aesIVBytes = new byte[16];
+                                Buffer.BlockCopy(secondHalfBytes, 16, aesIVBytes, 0, 16);
+                                byte[] aesBuffer = new byte[256];
                                 logs.AppendText("size of th key ----" + aesKeyBytes.Length.ToString() + "\n");
                                 logs.AppendText("size of th IV ----" + aesIVBytes.Length.ToString() + "\n");
                                 aesBuffer = encryptWithAES128(successString, aesKeyBytes, aesIVBytes);
-                                
-                                newClient.Send(aesBuffer);
+                                string aesIVString2 = Encoding.UTF8.GetString(aesBuffer);
+                                //logs.AppendText("encrysdgfgfdsgfddfgdfgfpted::" + aesIVString2 + "\n");
+                                logs.AppendText("\n \n");
+                                logs.AppendText("serverdan gelen data: " + aesIVString2 + "\n");
+                                string keys = generateHexStringFromByteArray(aesKeyBytes);
+                                string ivs = generateHexStringFromByteArray(aesIVBytes);
 
+                                logs.AppendText("\n\n" + "this is the key::: " + keys + "\n");
+                                logs.AppendText("\n\n" + "this is the iv::: " + ivs + "\n");
+                                newClient.Send(aesBuffer);
                                 logs.AppendText("Authentication unsuccessful");
                             }
 
-                            //getting the lower quarter of the password hash
-                            //string lowerQuarterPassword = currentUserPasswordHash.Substring(0, currentUserPasswordHash.Length / 4);
-                            //byte[] lowerQuarterBytes = hexStringToByteArray(lowerQuarterPassword);
-                            //string randomNumberString = BitConverter.ToString(randomNumber).Replace("-", "");
-
-                            //byte[] hmacPasswordResult = applyHMACwithSHA512(randomNumberString , lowerQuarterBytes);
 
                         }
                         else
@@ -322,8 +332,6 @@ namespace Server
                             socketList.Remove(newClient);
 
                         }
-
-                        
 
                     }
 
@@ -442,7 +450,7 @@ namespace Server
             aesObject.BlockSize = 128;
             // mode -> CipherMode.*
             aesObject.Mode = CipherMode.CBC;
-            //aesObject.Padding = PaddingMode.PKCS7;
+            aesObject.Padding = PaddingMode.PKCS7;
             // feedback size should be equal to block size
             //aesObject.FeedbackSize = 128;
             // set the key

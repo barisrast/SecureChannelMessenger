@@ -32,7 +32,6 @@ namespace Client_project
             InitializeComponent();
 
             //Reading the public RSA key which will be used for encryption purposes
-
             using (System.IO.StreamReader fileReader =
             new System.IO.StreamReader("server_enc_dec_pub.txt"))
             {
@@ -40,7 +39,6 @@ namespace Client_project
             }
 
             //Reading the public RSA key which will be used for signature verification purposes
-
             using (System.IO.StreamReader fileReader =
             new System.IO.StreamReader("server_sign_verify_pub.txt"))
             {
@@ -61,7 +59,6 @@ namespace Client_project
             string passwordVar = password_field.Text;
 
             string channelVar = channel_combobox.SelectedItem.ToString();
-            //logs.AppendText("Channel: " + channelVar + "\n");
 
             int portNumInt;
             if ((Int32.TryParse(portNumVar, out portNumInt)) && (ipVar != ""))
@@ -79,24 +76,20 @@ namespace Client_project
 
                     //The part below takes the SHA-512 hash of the password
                      byte[] passwordBytes = Encoding.UTF8.GetBytes(passwordVar);
-                    //byte[] passwordBytes = Convert.FromBase64String(passwordVar);
                     string hashedString;
                     using (SHA512 sha512 = SHA512.Create())
                     {
                         byte[] hashedBytes = sha512.ComputeHash(passwordBytes);
                         hashedString = generateHexStringFromByteArray(hashedBytes);
-                        //hashedString = Encoding.UTF8.GetString(hashedBytes);
-                        //hashedString = Convert.ToBase64String(passwordBytes);
                     }
+                    logs.AppendText("SHA-512 hash of the input password: " +  hashedString+"\n");
 
 
                     //Concatenating the hashed password with the username and channel input
                     string concatanatedHashString = hashedString + "|ar|" + usernameVar + "|ar|" + channelVar;
-                    //string concatanatedHashString = "denemeString";
 
                     //Encrypting the data using RSA public key
                     byte[] concatanatedHashBytes = Encoding.UTF8.GetBytes(concatanatedHashString);
-                    //byte[] concatanatedHashBytes = Convert.FromBase64String(concatanatedHashString);
 
                     byte[] encryptedBytes = new byte[384];
                     using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
@@ -175,7 +168,7 @@ namespace Client_project
                         }
                         else if (message == "success")
                         {
-                            logs.AppendText(username_field.Text + " successfully enroled.");
+                            logs.AppendText(username_field.Text + " successfully enrolled.");
                         }
                     }
                     else
@@ -305,9 +298,11 @@ namespace Client_project
                     //sending this HMAC to the server:
                     clientSocket.Send(hmacPasswordResult);
 
-                    byte[] authenticationResponseBuffer = new byte[384];
+                    byte[] authenticationResponseBuffer = new byte[256];
                     clientSocket.Receive(authenticationResponseBuffer);
                     string encryptedString = Encoding.UTF8.GetString(authenticationResponseBuffer).Trim('\0');
+                    logs.AppendText("\n \n");
+                    logs.AppendText("serverdan gelen data: "+ encryptedString+"\n");    
                     logs.AppendText(",,,,,,,,,," + encryptedString + ",,,,,,,,,,,," + "\n");
                     logs.AppendText("string boyutu:" + authenticationResponseBuffer.Length.ToString() + "\n");
                     //hashedString = "A44D9C56248A2B9BC170E6D57FAA415FCC1BD688A7AFD0A773717225BBEC8CBC29C2951CB003D64948244795ED779BB7FA3BB8765D6E65B707DB58CF3C88193B";
@@ -323,7 +318,13 @@ namespace Client_project
                     logs.AppendText("size of th key ----" + aesDecBytes.Length.ToString() + "\n");
                     logs.AppendText("size of th IV ----" + aesIVBytes.Length.ToString() + "\n");
                     logs.AppendText("size of the enrypted string---" + encryptedString.Length.ToString() +"\n");
-                    
+
+                    string keys = generateHexStringFromByteArray(aesDecBytes);
+                    string ivs = generateHexStringFromByteArray(aesIVBytes);
+
+                    logs.AppendText("\n\n" + "this is the key::: " + keys + "\n");
+                    logs.AppendText("\n\n" + "this is the iv::: " + ivs + "\n");
+
                     try
                     {
                         byte[] decryptedAES128 = decryptWithAES128(encryptedString, aesDecBytes, aesIVBytes);
@@ -390,7 +391,7 @@ namespace Client_project
             aesObject.BlockSize = 128;
             // mode -> CipherMode.*
             aesObject.Mode = CipherMode.CBC;
-            //aesObject.Padding = PaddingMode.PKCS7;
+            aesObject.Padding = PaddingMode.PKCS7;
             // feedback size should be equal to block size
             //aesObject.FeedbackSize = 128;
             // set the key
@@ -413,6 +414,8 @@ namespace Client_project
 
             return result;
         }
+
+
 
     }
 
