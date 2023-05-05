@@ -69,6 +69,8 @@ namespace Client_project
                     connect_button.Enabled = false;
                     disconnect_button.Enabled = true;
                     connected = true;
+                    disconnect_button.BackColor = System.Drawing.Color.IndianRed;
+
                     string enrollMessage = "|enroll|";
                     byte[] enrollBytes = Encoding.UTF8.GetBytes(enrollMessage);
                     clientSocket.Send(enrollBytes);
@@ -184,10 +186,11 @@ namespace Client_project
                     }
 
                     // Print the exception details to the logs
-                    logs.AppendText("Error: " + ex.Message + "\n");
+                    // logs.AppendText("Error: " + ex.Message + "\n");
 
                     clientSocket.Close();
                     connected = false;
+                    disconnect_button.BackColor = SystemColors.Control;
                 }
             }
         }
@@ -214,33 +217,9 @@ namespace Client_project
             disconnect_button.Enabled = false;
             connect_button.Enabled = true;
 
-            connect_button.BackColor = SystemColors.Control;
             disconnect_button.BackColor = SystemColors.Control;
         }
 
-
-        // signing with RSA
-        static bool verifyWithRSA(string input, int algoLength, string xmlString, byte[] signature)
-        {
-            // convert input string to byte array
-            byte[] byteInput = Encoding.Default.GetBytes(input);
-            // create RSA object from System.Security.Cryptography
-            RSACryptoServiceProvider rsaObject = new RSACryptoServiceProvider(algoLength);
-            // set RSA object with xml string
-            rsaObject.FromXmlString(xmlString);
-            bool result = false;
-
-            try
-            {
-                result = rsaObject.VerifyData(byteInput, "SHA256", signature);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-            }
-
-            return result;
-        }
 
         private void login_button_Click(object sender, EventArgs e)
         {
@@ -265,7 +244,6 @@ namespace Client_project
                     //Sending the username to the server.
                     byte[] usernameByteA = new byte[128];
                     usernameByteA = Encoding.UTF8.GetBytes(usernameVar);
-                    //logs.AppendText("4444" + usernameVar + "sdfsfdfsd");
                     clientSocket.Send(usernameByteA);
 
                     //Receiving the random number from the server
@@ -300,39 +278,40 @@ namespace Client_project
 
                     byte[] authenticationResponseBuffer = new byte[256];
                     clientSocket.Receive(authenticationResponseBuffer);
-                    string encryptedString = Encoding.UTF8.GetString(authenticationResponseBuffer).Trim('\0');
-                    logs.AppendText(encryptedString);
-                    
-                    //byte[] hashPasswordBytes = hexStringToByteArray(hashedString);
-                    //byte[] secondHalfBytes = new byte[32];
-                    //Buffer.BlockCopy(hashPasswordBytes, 32, secondHalfBytes, 0, 32);
+                    string encryptedString = Convert.ToBase64String(authenticationResponseBuffer).TrimEnd('=').TrimEnd('A') + "=";
+                    logs.AppendText("Encrypted message: " + encryptedString + "\n");
 
-                    //byte[] aesDecBytes = new byte[16];
-                    //Buffer.BlockCopy(secondHalfBytes, 0, aesDecBytes, 0, 16);
+                    // Receive the RSA signature from the server
+                    byte[] signatureBuffer = new byte[384];
+                    clientSocket.Receive(signatureBuffer);
 
-                    //byte[] aesIVBytes = new byte[16];
-                    //Buffer.BlockCopy(secondHalfBytes, 16, aesIVBytes, 0, 16);
-                    //logs.AppendText("size of th key ----" + aesDecBytes.Length.ToString() + "\n");
-                    //logs.AppendText("size of th IV ----" + aesIVBytes.Length.ToString() + "\n");
-                    //logs.AppendText("size of the enrypted string---" + encryptedString.Length.ToString() +"\n");
+                    // Extract AES key and IV from the hashed password bytes
+                    byte[] hashedPasswordBytes = hexStringToByteArray(hashedString);
+                    byte[] aesKey = new byte[16];
+                    byte[] aesIV = new byte[16];
+                    Buffer.BlockCopy(hashedPasswordBytes, 0, aesKey, 0, 16);
+                    Buffer.BlockCopy(hashedPasswordBytes, 16, aesIV, 0, 16);
 
-                    //string keys = generateHexStringFromByteArray(aesDecBytes);
-                    //string ivs = generateHexStringFromByteArray(aesIVBytes);
+                    // Verify the RSA signature
+                    bool isSignatureValid = verifyWithRSA(encryptedString, 3072, RSA3072PublicVerificationKey, signatureBuffer);
+                    if (isSignatureValid) {
+                        logs.AppendText("RSA Signature is valid.\n");
 
-                    //logs.AppendText("\n\n" + "this is the key::: " + keys + "\n");
-                    //logs.AppendText("\n\n" + "this is the iv::: " + ivs + "\n");
+                        try {
+                            // Decrypt the authentication message
+                            byte[] encryptedBytes = Convert.FromBase64String(encryptedString);
+                            byte[] decryptedBytes = decryptWithAES128(encryptedBytes, aesKey, aesIV);
+                            string decryptedString = Encoding.UTF8.GetString(decryptedBytes);
 
-                    //try
-                    //{
-                       // byte[] decryptedAES128 = decryptWithAES128(encryptedString, aesDecBytes, aesIVBytes);
-                       // string x = Encoding.UTF8.GetString(decryptedAES128);
-                        //logs.AppendText("decrypted:" + x);
-                    //}
-                    //catch(Exception ex)
-                    //{
-                        //logs.AppendText(ex.Message + "\n");
-                    //}
-                    
+                            logs.AppendText("Decrypted message: " + decryptedString + "\n");
+                        }
+                        catch (Exception ex) {
+                            logs.AppendText("Password is incorrect, try again.\n");
+                        }
+                    }
+                    else {
+                        logs.AppendText("RSA Signature is NOT valid.\n");
+                    }
 
 
                 }
@@ -347,6 +326,7 @@ namespace Client_project
                 logs.AppendText("Check the port number. \n");
             }
         }
+
         // helper functions
         static string generateHexStringFromByteArray(byte[] input)
         {
@@ -375,11 +355,7 @@ namespace Client_project
             return result;
         }
         // encryption with AES-128
-        static byte[] decryptWithAES128(string input, byte[] key, byte[] IV)
-        {
-            // convert input string to byte array
-            byte[] byteInput = Encoding.UTF8.GetBytes(input);
-
+        static byte[] decryptWithAES128(byte[] byteInput, byte[] key, byte[] IV) {
             // create AES object from System.Security.Cryptography
             RijndaelManaged aesObject = new RijndaelManaged();
             // since we want to use AES-128
@@ -389,19 +365,16 @@ namespace Client_project
             // mode -> CipherMode.*
             aesObject.Mode = CipherMode.CBC;
             aesObject.Padding = PaddingMode.PKCS7;
-            // feedback size should be equal to block size
-            //aesObject.FeedbackSize = 128;
             // set the key
             aesObject.Key = key;
             // set the IV
             aesObject.IV = IV;
-            
+
             // create an encryptor with the settings provided
             ICryptoTransform decryptor = aesObject.CreateDecryptor();
             byte[] result = null;
 
-            try
-            {
+            try {
                 result = decryptor.TransformFinalBlock(byteInput, 0, byteInput.Length);
             }
             catch (Exception e) // if encryption fails
@@ -413,8 +386,28 @@ namespace Client_project
         }
 
 
+        // signing with RSA
+        static bool verifyWithRSA(string input, int algoLength, string xmlString, byte[] signature) {
+            // convert input string to byte array
+            byte[] byteInput = Encoding.Default.GetBytes(input);
+            // create RSA object from System.Security.Cryptography
+            RSACryptoServiceProvider rsaObject = new RSACryptoServiceProvider(algoLength);
+            // set RSA object with xml string
+            rsaObject.FromXmlString(xmlString);
+            bool result = false;
 
-    }
+            try {
+                result = rsaObject.VerifyData(byteInput, "SHA256", signature);
+            }
+            catch (Exception e) {
+                Console.WriteLine(e.Message);
+            }
+
+            return result;
+        }
+
+
+	}
 
 
 }

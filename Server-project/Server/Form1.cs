@@ -210,12 +210,10 @@ namespace Server
                             }
                         }
 
-                        if (usernameExists)
-                        {
+                        if (usernameExists) {
                             // Generate a 128-bit random number and send it to the client
                             byte[] randomNumber = new byte[16];
-                            using (RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider())
-                            {
+                            using (RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider()) {
                                 rng.GetBytes(randomNumber);
                             }
                             string tempRandomVar = generateHexStringFromByteArray(randomNumber);
@@ -225,32 +223,34 @@ namespace Server
                             //receiving the hmac from the client
                             byte[] hmacByteBuffer = new byte[384];
                             newClient.Receive(hmacByteBuffer);
-                            string hmacByteString2= Encoding.UTF8.GetString(hmacByteBuffer).Trim('\0');
-                            //byte[] kedi = hexStringToByteArray(hmacByteString2);
+                            string hmacByteString2 = Encoding.UTF8.GetString(hmacByteBuffer).Trim('\0');
                             byte[] kedi = Encoding.UTF8.GetBytes(hmacByteString2);
-                            //string hmacHexVar = generateHexStringFromByteArray(kedi);
                             string hmacHexVar = Encoding.UTF8.GetString(kedi);
-                            logs.AppendText("The HMAC user sent is this: "+ hmacHexVar+ "\n");
+                            logs.AppendText("The HMAC user sent is this: " + hmacHexVar + "\n");
                             hmacByteBuffer = Encoding.UTF8.GetBytes(hmacByteString2);
 
                             //getting the hash of the password of the user
                             string currentUserPasswordHash = null;
-                            foreach (string line in File.ReadLines(@"../../username-db.txt", Encoding.UTF8))
-                            {
+                            foreach (string line in File.ReadLines(@"../../username-db.txt", Encoding.UTF8)) {
                                 string[] databaseToken = line.Split(new[] { "||" }, StringSplitOptions.None);
                                 string usernameDatabase = databaseToken[0];
 
-                                if (usernameDatabase == usernameString)
-                                {
+                                if (usernameDatabase == usernameString) {
                                     currentUserPasswordHash = databaseToken[1];
                                     break;
                                 }
                             }
+                            // Extract AES key and IV from the hashed password bytes
+                            byte[] hashedPasswordBytes = hexStringToByteArray(currentUserPasswordHash);
+                            byte[] aesKey = new byte[16];
+                            byte[] aesIV = new byte[16];
+                            Buffer.BlockCopy(hashedPasswordBytes, 0, aesKey, 0, 16);
+                            Buffer.BlockCopy(hashedPasswordBytes, 16, aesIV, 0, 16);
+
                             //applying hmac to see if it is equal to the hmac the client sent
                             string lowerQuarterPassword = currentUserPasswordHash.Substring(0, currentUserPasswordHash.Length / 4);
                             byte[] lowerQuarterBytes = hexStringToByteArray(lowerQuarterPassword);
-                           
-                            
+
                             string randomString = Encoding.UTF8.GetString(randomNumber);
                             byte[] hmacPasswordResult = applyHMACwithSHA512(randomString, lowerQuarterBytes);
 
@@ -258,77 +258,36 @@ namespace Server
                             logs.AppendText("Server's result of the HMAC of random number: " + varVar + "\n");
                             string hmac1 = Encoding.UTF8.GetString(hmacPasswordResult);
                             string hmac2 = Encoding.UTF8.GetString(hmacByteBuffer);
-                            //logs.AppendText("client hmaci===" + hmac2 + "\n");
-                            //logs.AppendText("server hmaci===" + hmac1 + "\n");
-
 
                             //If the HMACs are equal, we understand that the client sent the correct password
-                            if (hmac1 == hmac2)
-                            {
+                            if (hmac1 == hmac2) {
                                 string successString = "Authentication successful";
-                                
-                                byte[] hashPasswordBytes = hexStringToByteArray(currentUserPasswordHash);
+                                byte[] encryptedSuccessString = encryptWithAES128(successString, aesKey, aesIV);
+                                string base64EncryptedSuccessString = Convert.ToBase64String(encryptedSuccessString);
+                                byte[] signature = signWithRSA(base64EncryptedSuccessString, 3072, RSA3072PrivateVerificationKey);
 
-                                byte[] secondHalfBytes = new byte[32];
-                                Buffer.BlockCopy(hashPasswordBytes, 32, secondHalfBytes, 0, 32);
-
-                                byte[] aesKeyBytes = new byte[16];
-                                Buffer.BlockCopy(secondHalfBytes, 0, aesKeyBytes, 0, 16);
-
-                                byte[] aesIVBytes = new byte[16];
-                                Buffer.BlockCopy(secondHalfBytes, 16, aesIVBytes, 0, 16);
-                                byte[] aesBuffer = new byte[256];
-                                //logs.AppendText("size of th key ----" + aesKeyBytes.Length.ToString() + "\n");
-                                //logs.AppendText("size of th IV ----" + aesIVBytes.Length.ToString() + "\n");
-                                aesBuffer = encryptWithAES128(successString, aesKeyBytes, aesIVBytes);
-                                string aesIVString2 = Encoding.UTF8.GetString(aesBuffer);
-                                //logs.AppendText("encrysdgfgfdsgfddfgdfgfpted::" + aesIVString2 + "\n");
-                                //logs.AppendText("\n \n");
-                                //logs.AppendText("serverdan gelen data: " + aesIVString2 + "\n");
-                                string keys = generateHexStringFromByteArray(aesKeyBytes);
-                                string ivs = generateHexStringFromByteArray(aesIVBytes);
-
-                                //logs.AppendText("\n\n" + "this is the key::: " + keys + "\n");
-                                //logs.AppendText("\n\n" + "this is the iv::: " + ivs + "\n");
-                                string aesStringTemp = "Authentication Successful\n";
-                                byte[] aesBufferTemp = Encoding.UTF8.GetBytes(aesStringTemp);
-                                newClient.Send(aesBufferTemp);
-                                logs.AppendText("Authentication succesful");
+                                // Send encrypted message and signature to the client
+                                newClient.Send(encryptedSuccessString);
+                                logs.AppendText("Sending encrypted message: " + Convert.ToBase64String(encryptedSuccessString) + "\n\n");
+                                newClient.Send(signature);
+                                logs.AppendText("Sending RSA signature: " + Convert.ToBase64String(signature) + "\n\n");
                             }
-                            else
-                            {
+                            else {
                                 string successString = "Authentication unsuccessful";
-                                byte[] hashPasswordBytes = hexStringToByteArray(currentUserPasswordHash);
+                                byte[] encryptedSuccessString = encryptWithAES128(successString, aesKey, aesIV);
+                                string base64EncryptedSuccessString = Convert.ToBase64String(encryptedSuccessString);
+                                byte[] signature = signWithRSA(base64EncryptedSuccessString, 3072, RSA3072PrivateVerificationKey);
 
-                                byte[] secondHalfBytes = new byte[32];
-                                Buffer.BlockCopy(hashPasswordBytes, 32, secondHalfBytes, 0, 32);
-
-                                byte[] aesKeyBytes = new byte[16];
-                                Buffer.BlockCopy(secondHalfBytes, 0, aesKeyBytes, 0, 16);
-
-                                byte[] aesIVBytes = new byte[16];
-                                Buffer.BlockCopy(secondHalfBytes, 16, aesIVBytes, 0, 16);
-                                byte[] aesBuffer = new byte[256];
-                                logs.AppendText("size of th key ----" + aesKeyBytes.Length.ToString() + "\n");
-                                logs.AppendText("size of th IV ----" + aesIVBytes.Length.ToString() + "\n");
-                                aesBuffer = encryptWithAES128(successString, aesKeyBytes, aesIVBytes);
-                                string aesIVString2 = Encoding.UTF8.GetString(aesBuffer);
-                                //logs.AppendText("encrysdgfgfdsgfddfgdfgfpted::" + aesIVString2 + "\n");
-                                logs.AppendText("\n \n");
-                                logs.AppendText("serverdan gelen data: " + aesIVString2 + "\n");
-                                string keys = generateHexStringFromByteArray(aesKeyBytes);
-                                string ivs = generateHexStringFromByteArray(aesIVBytes);
-
-                                logs.AppendText("\n\n" + "this is the key::: " + keys + "\n");
-                                logs.AppendText("\n\n" + "this is the iv::: " + ivs + "\n");
-                                newClient.Send(aesBuffer);
-                                logs.AppendText("Authentication unsuccessful");
+                                // Send encrypted message and signature to the client
+                                newClient.Send(encryptedSuccessString);
+                                logs.AppendText("Sending encrypted message: " + Convert.ToBase64String(encryptedSuccessString) + "\n\n");
+                                newClient.Send(signature);
+                                logs.AppendText("Sending RSA signature: " + Convert.ToBase64String(signature) + "\n\n");
                             }
-
 
                         }
-                        else
-                        {
+
+                        else {
                             string usernameProblem = "You do not have an acccount with this username!";
                             byte[] problemBytes = Encoding.UTF8.GetBytes(usernameProblem);
                             newClient.Send(problemBytes);
