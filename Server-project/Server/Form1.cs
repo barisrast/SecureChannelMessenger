@@ -226,9 +226,11 @@ namespace Server
                             byte[] hmacByteBuffer = new byte[384];
                             newClient.Receive(hmacByteBuffer);
                             string hmacByteString2= Encoding.UTF8.GetString(hmacByteBuffer).Trim('\0');
+                            //byte[] kedi = hexStringToByteArray(hmacByteString2);
                             byte[] kedi = Encoding.UTF8.GetBytes(hmacByteString2);
-                            string hmacHexVar = generateHexStringFromByteArray(kedi);
-                            logs.AppendText("The HMAC user sent is this: "+ kedi+ "\n");
+                            //string hmacHexVar = generateHexStringFromByteArray(kedi);
+                            string hmacHexVar = Encoding.UTF8.GetString(kedi);
+                            logs.AppendText("The HMAC user sent is this: "+ hmacHexVar+ "\n");
                             hmacByteBuffer = Encoding.UTF8.GetBytes(hmacByteString2);
 
                             //getting the hash of the password of the user
@@ -276,19 +278,21 @@ namespace Server
                                 byte[] aesIVBytes = new byte[16];
                                 Buffer.BlockCopy(secondHalfBytes, 16, aesIVBytes, 0, 16);
                                 byte[] aesBuffer = new byte[256];
-                                logs.AppendText("size of th key ----" + aesKeyBytes.Length.ToString() + "\n");
-                                logs.AppendText("size of th IV ----" + aesIVBytes.Length.ToString() + "\n");
+                                //logs.AppendText("size of th key ----" + aesKeyBytes.Length.ToString() + "\n");
+                                //logs.AppendText("size of th IV ----" + aesIVBytes.Length.ToString() + "\n");
                                 aesBuffer = encryptWithAES128(successString, aesKeyBytes, aesIVBytes);
                                 string aesIVString2 = Encoding.UTF8.GetString(aesBuffer);
                                 //logs.AppendText("encrysdgfgfdsgfddfgdfgfpted::" + aesIVString2 + "\n");
-                                logs.AppendText("\n \n");
-                                logs.AppendText("serverdan gelen data: " + aesIVString2 + "\n");
+                                //logs.AppendText("\n \n");
+                                //logs.AppendText("serverdan gelen data: " + aesIVString2 + "\n");
                                 string keys = generateHexStringFromByteArray(aesKeyBytes);
                                 string ivs = generateHexStringFromByteArray(aesIVBytes);
 
-                                logs.AppendText("\n\n" + "this is the key::: " + keys + "\n");
-                                logs.AppendText("\n\n" + "this is the iv::: " + ivs + "\n");
-                                newClient.Send(aesBuffer);
+                                //logs.AppendText("\n\n" + "this is the key::: " + keys + "\n");
+                                //logs.AppendText("\n\n" + "this is the iv::: " + ivs + "\n");
+                                string aesStringTemp = "Authentication Successful\n";
+                                byte[] aesBufferTemp = Encoding.UTF8.GetBytes(aesStringTemp);
+                                newClient.Send(aesBufferTemp);
                                 logs.AppendText("Authentication succesful");
                             }
                             else

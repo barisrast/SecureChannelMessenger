@@ -301,40 +301,37 @@ namespace Client_project
                     byte[] authenticationResponseBuffer = new byte[256];
                     clientSocket.Receive(authenticationResponseBuffer);
                     string encryptedString = Encoding.UTF8.GetString(authenticationResponseBuffer).Trim('\0');
-                    logs.AppendText("\n \n");
-                    logs.AppendText("serverdan gelen data: "+ encryptedString+"\n");    
-                    logs.AppendText(",,,,,,,,,," + encryptedString + ",,,,,,,,,,,," + "\n");
-                    logs.AppendText("string boyutu:" + authenticationResponseBuffer.Length.ToString() + "\n");
-                    //hashedString = "A44D9C56248A2B9BC170E6D57FAA415FCC1BD688A7AFD0A773717225BBEC8CBC29C2951CB003D64948244795ED779BB7FA3BB8765D6E65B707DB58CF3C88193B";
-                    byte[] hashPasswordBytes = hexStringToByteArray(hashedString);
-                    byte[] secondHalfBytes = new byte[32];
-                    Buffer.BlockCopy(hashPasswordBytes, 32, secondHalfBytes, 0, 32);
+                    logs.AppendText(encryptedString);
+                    
+                    //byte[] hashPasswordBytes = hexStringToByteArray(hashedString);
+                    //byte[] secondHalfBytes = new byte[32];
+                    //Buffer.BlockCopy(hashPasswordBytes, 32, secondHalfBytes, 0, 32);
 
-                    byte[] aesDecBytes = new byte[16];
-                    Buffer.BlockCopy(secondHalfBytes, 0, aesDecBytes, 0, 16);
+                    //byte[] aesDecBytes = new byte[16];
+                    //Buffer.BlockCopy(secondHalfBytes, 0, aesDecBytes, 0, 16);
 
-                    byte[] aesIVBytes = new byte[16];
-                    Buffer.BlockCopy(secondHalfBytes, 16, aesIVBytes, 0, 16);
-                    logs.AppendText("size of th key ----" + aesDecBytes.Length.ToString() + "\n");
-                    logs.AppendText("size of th IV ----" + aesIVBytes.Length.ToString() + "\n");
-                    logs.AppendText("size of the enrypted string---" + encryptedString.Length.ToString() +"\n");
+                    //byte[] aesIVBytes = new byte[16];
+                    //Buffer.BlockCopy(secondHalfBytes, 16, aesIVBytes, 0, 16);
+                    //logs.AppendText("size of th key ----" + aesDecBytes.Length.ToString() + "\n");
+                    //logs.AppendText("size of th IV ----" + aesIVBytes.Length.ToString() + "\n");
+                    //logs.AppendText("size of the enrypted string---" + encryptedString.Length.ToString() +"\n");
 
-                    string keys = generateHexStringFromByteArray(aesDecBytes);
-                    string ivs = generateHexStringFromByteArray(aesIVBytes);
+                    //string keys = generateHexStringFromByteArray(aesDecBytes);
+                    //string ivs = generateHexStringFromByteArray(aesIVBytes);
 
-                    logs.AppendText("\n\n" + "this is the key::: " + keys + "\n");
-                    logs.AppendText("\n\n" + "this is the iv::: " + ivs + "\n");
+                    //logs.AppendText("\n\n" + "this is the key::: " + keys + "\n");
+                    //logs.AppendText("\n\n" + "this is the iv::: " + ivs + "\n");
 
-                    try
-                    {
-                        byte[] decryptedAES128 = decryptWithAES128(encryptedString, aesDecBytes, aesIVBytes);
-                        string x = Encoding.UTF8.GetString(decryptedAES128);
-                        logs.AppendText("decrypted:" + x);
-                    }
-                    catch(Exception ex)
-                    {
-                        logs.AppendText(ex.Message + "\n");
-                    }
+                    //try
+                    //{
+                       // byte[] decryptedAES128 = decryptWithAES128(encryptedString, aesDecBytes, aesIVBytes);
+                       // string x = Encoding.UTF8.GetString(decryptedAES128);
+                        //logs.AppendText("decrypted:" + x);
+                    //}
+                    //catch(Exception ex)
+                    //{
+                        //logs.AppendText(ex.Message + "\n");
+                    //}
                     
 
 
