@@ -53,6 +53,11 @@ namespace Client_project
 			this.login_ip_field = new System.Windows.Forms.TextBox();
 			this.label9 = new System.Windows.Forms.Label();
 			this.label10 = new System.Windows.Forms.Label();
+			this.textBox1 = new System.Windows.Forms.TextBox();
+			this.button1 = new System.Windows.Forms.Button();
+			this.label11 = new System.Windows.Forms.Label();
+			this.richTextBox1 = new System.Windows.Forms.RichTextBox();
+			this.label12 = new System.Windows.Forms.Label();
 			this.SuspendLayout();
 			// 
 			// connect_button
@@ -83,7 +88,7 @@ namespace Client_project
 			// 
 			this.logs.Location = new System.Drawing.Point(366, 12);
 			this.logs.Name = "logs";
-			this.logs.Size = new System.Drawing.Size(174, 313);
+			this.logs.Size = new System.Drawing.Size(203, 313);
 			this.logs.TabIndex = 4;
 			this.logs.Text = "";
 			// 
@@ -95,7 +100,6 @@ namespace Client_project
 			this.label1.Size = new System.Drawing.Size(20, 13);
 			this.label1.TabIndex = 5;
 			this.label1.Text = "IP:";
-
 			// 
 			// label2
 			// 
@@ -255,11 +259,58 @@ namespace Client_project
 			this.label10.TabIndex = 25;
 			this.label10.Text = "Port:";
 			// 
+			// textBox1
+			// 
+			this.textBox1.Location = new System.Drawing.Point(60, 381);
+			this.textBox1.Name = "textBox1";
+			this.textBox1.Size = new System.Drawing.Size(151, 20);
+			this.textBox1.TabIndex = 26;
+			// 
+			// button1
+			// 
+			this.button1.Location = new System.Drawing.Point(217, 379);
+			this.button1.Name = "button1";
+			this.button1.Size = new System.Drawing.Size(75, 23);
+			this.button1.TabIndex = 27;
+			this.button1.Text = "Send";
+			this.button1.UseVisualStyleBackColor = true;
+			// 
+			// label11
+			// 
+			this.label11.AutoSize = true;
+			this.label11.Location = new System.Drawing.Point(57, 365);
+			this.label11.Name = "label11";
+			this.label11.Size = new System.Drawing.Size(148, 13);
+			this.label11.TabIndex = 28;
+			this.label11.Text = "Send a message to a channel";
+			// 
+			// richTextBox1
+			// 
+			this.richTextBox1.Location = new System.Drawing.Point(320, 381);
+			this.richTextBox1.Name = "richTextBox1";
+			this.richTextBox1.Size = new System.Drawing.Size(229, 96);
+			this.richTextBox1.TabIndex = 29;
+			this.richTextBox1.Text = "";
+			// 
+			// label12
+			// 
+			this.label12.AutoSize = true;
+			this.label12.Location = new System.Drawing.Point(363, 365);
+			this.label12.Name = "label12";
+			this.label12.Size = new System.Drawing.Size(136, 13);
+			this.label12.TabIndex = 30;
+			this.label12.Text = "Enrolled channel messages";
+			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(579, 367);
+			this.ClientSize = new System.Drawing.Size(588, 505);
+			this.Controls.Add(this.label12);
+			this.Controls.Add(this.richTextBox1);
+			this.Controls.Add(this.label11);
+			this.Controls.Add(this.button1);
+			this.Controls.Add(this.textBox1);
 			this.Controls.Add(this.label10);
 			this.Controls.Add(this.label9);
 			this.Controls.Add(this.login_ip_field);
@@ -315,6 +366,11 @@ namespace Client_project
         private TextBox login_ip_field;
         private Label label9;
         private Label label10;
-    }
+		private TextBox textBox1;
+		private Button button1;
+		private Label label11;
+		private RichTextBox richTextBox1;
+		private Label label12;
+	}
 }
 

@@ -65,6 +65,14 @@ namespace Server
 
                 listening = true;
                 listenButton.Enabled = false;
+
+                IF100_Master_TextBox.Enabled = true;
+                IF100_GenerateKey_Button.Enabled = true;
+                MATH101_Master_TextBox.Enabled = true;
+                MATH101_GenerateKey_Button.Enabled = true;
+                SPS101_Master_TextBox.Enabled = true;
+                SPS101_GenerateKey_Button.Enabled = true;
+
                 acceptThread = new Thread(new ThreadStart(Accept));
                 acceptThread.Start();
 
@@ -231,12 +239,15 @@ namespace Server
 
                             //getting the hash of the password of the user
                             string currentUserPasswordHash = null;
+                            string currentUserChannel = "";
+
                             foreach (string line in File.ReadLines(@"../../username-db.txt", Encoding.UTF8)) {
                                 string[] databaseToken = line.Split(new[] { "||" }, StringSplitOptions.None);
                                 string usernameDatabase = databaseToken[0];
 
                                 if (usernameDatabase == usernameString) {
                                     currentUserPasswordHash = databaseToken[1];
+                                    currentUserChannel = databaseToken[2];
                                     break;
                                 }
                             }
@@ -259,18 +270,66 @@ namespace Server
                             string hmac1 = Encoding.UTF8.GetString(hmacPasswordResult);
                             string hmac2 = Encoding.UTF8.GetString(hmacByteBuffer);
 
+
                             //If the HMACs are equal, we understand that the client sent the correct password
                             if (hmac1 == hmac2) {
-                                string successString = "Authentication successful";
-                                byte[] encryptedSuccessString = encryptWithAES128(successString, aesKey, aesIV);
-                                string base64EncryptedSuccessString = Convert.ToBase64String(encryptedSuccessString);
-                                byte[] signature = signWithRSA(base64EncryptedSuccessString, 3072, RSA3072PrivateVerificationKey);
+                                if (hashedMasterKeys.ContainsKey(currentUserChannel)) {
+                                    logs.AppendText("Retrieved Master Key: " + BitConverter.ToString(hashedMasterKeys[currentUserChannel]).Replace("-", ""));
+                                    logs.AppendText(usernameString + " authenticated.\n");
 
-                                // Send encrypted message and signature to the client
-                                newClient.Send(encryptedSuccessString);
-                                logs.AppendText("Sending encrypted message: " + Convert.ToBase64String(encryptedSuccessString) + "\n\n");
-                                newClient.Send(signature);
-                                logs.AppendText("Sending RSA signature: " + Convert.ToBase64String(signature) + "\n\n");
+                                    // Get the hashed master key bytes for the user's channel
+                                    byte[] hashedMasterKeyBytes = hashedMasterKeys[currentUserChannel];
+
+                                    // Split the byte array to generate the AES key, IV and HMAC key for the channel
+                                    byte[] aesKeyForChannel = new byte[16];
+                                    byte[] ivForChannel = new byte[16];
+                                    byte[] hmacKeyForChannel = new byte[16];
+
+                                    Buffer.BlockCopy(hashedMasterKeyBytes, 0, aesKeyForChannel, 0, 16);
+                                    Buffer.BlockCopy(hashedMasterKeyBytes, 16, ivForChannel, 0, 16);
+                                    Buffer.BlockCopy(hashedMasterKeyBytes, 32, hmacKeyForChannel, 0, 16);
+
+                                    // Encrypt these keys and IV using AES-128 encryption with the key and IV derived from client's password
+                                    string toBeEncrypted = generateHexStringFromByteArray(aesKeyForChannel) + generateHexStringFromByteArray(ivForChannel) + generateHexStringFromByteArray(hmacKeyForChannel);
+                                    byte[] encryptedChannelKeys = encryptWithAES128(toBeEncrypted, aesKey, aesIV);
+
+                                    // Append encrypted keys and IV to the success message
+                                    string successString = "Authentication successful";
+                                    string encryptedChannelKeysBase64 = Convert.ToBase64String(encryptedChannelKeys);
+                                    string messageWithKeys = successString + encryptedChannelKeysBase64;
+
+                                    // Sign the message (containing the success message and encrypted data) with the server's RSA key
+                                    byte[] messageWithKeysBytes = Encoding.UTF8.GetBytes(messageWithKeys);
+                                    byte[] signature = signWithRSA(messageWithKeys, 3072, RSA3072PrivateVerificationKey);
+
+                                    // Send the message (containing the success message and encrypted data) and signature to the client
+                                    newClient.Send(messageWithKeysBytes);
+                                    logs.AppendText("Sending encrypted message with keys: " + messageWithKeys + "\n\n");
+                                    newClient.Send(signature);
+                                    logs.AppendText("Sending RSA signature: " + Convert.ToBase64String(signature) + "\n\n");
+
+
+                                    // Log the keys and IV for the channel
+                                    logs.AppendText("AES Key for Channel: " + generateHexStringFromByteArray(aesKeyForChannel) + "\n");
+                                    logs.AppendText("IV for Channel: " + generateHexStringFromByteArray(ivForChannel) + "\n");
+                                    logs.AppendText("HMAC Key for Channel: " + generateHexStringFromByteArray(hmacKeyForChannel) + "\n");
+                                }
+                                else {
+                                    // Channel keys and IV are not available
+                                    string channelUnavailableString = "Channel Unavailable";
+                                    byte[] encryptedChannelUnavailableString = encryptWithAES128(channelUnavailableString, aesKey, aesIV);
+                                    string base64EncryptedChannelUnavailableString = Convert.ToBase64String(encryptedChannelUnavailableString);
+                                    byte[] signature = signWithRSA(base64EncryptedChannelUnavailableString, 3072, RSA3072PrivateVerificationKey);
+
+                                    // Send encrypted message and signature to the client
+                                    newClient.Send(encryptedChannelUnavailableString);
+                                    //logs.AppendText("Sending encrypted message: " + Convert.ToBase64String(encryptedChannelUnavailableString) + "\n\n");
+                                    newClient.Send(signature);
+                                    //logs.AppendText("Sending RSA signature: " + Convert.ToBase64String(signature) + "\n\n");
+
+                                    logs.AppendText("Channel keys and IV are not available for " + currentUserChannel + ". Sent 'Channel Unavailable' message to the client.\n");
+                                }
+
                             }
                             else {
                                 string successString = "Authentication unsuccessful";
@@ -284,6 +343,7 @@ namespace Server
                                 newClient.Send(signature);
                                 logs.AppendText("Sending RSA signature: " + Convert.ToBase64String(signature) + "\n\n");
                             }
+
 
                         }
 
@@ -356,15 +416,14 @@ namespace Server
         // verifying with RSA
         static byte[] signWithRSA(string input, int algoLength, string xmlString) {
             // convert input string to byte array
-            byte[] byteInput = Encoding.Default.GetBytes(input);
-            // create RSA object from System.Security.Cryptography
+            byte[] byteInput = Encoding.UTF8.GetBytes(input); // use UTF8 instead of Default
             RSACryptoServiceProvider rsaObject = new RSACryptoServiceProvider(algoLength);
             // set RSA object with xml string
             rsaObject.FromXmlString(xmlString);
             byte[] result = null;
 
             try {
-                result = rsaObject.SignData(byteInput, "SHA256");
+                result = rsaObject.SignData(byteInput, CryptoConfig.MapNameToOID("SHA256"));
             }
             catch (Exception e) {
                 Console.WriteLine(e.Message);
@@ -372,6 +431,7 @@ namespace Server
 
             return result;
         }
+
         // helper functions
         static string generateHexStringFromByteArray(byte[] input)
         {
@@ -436,5 +496,60 @@ namespace Server
 
             return result;
         }
-    }
+
+        // hash function: SHA-512
+        static byte[] hashWithSHA512(string input) {
+            // convert input string to byte array
+            byte[] byteInput = Encoding.Default.GetBytes(input);
+            // create a hasher object from System.Security.Cryptography
+            SHA512CryptoServiceProvider sha512Hasher = new SHA512CryptoServiceProvider();
+            // hash and save the resulting byte array
+            byte[] result = sha512Hasher.ComputeHash(byteInput);
+
+            return result;
+        }
+
+
+        /* MASTER KEY GENERATOR FUNCTIONS FOR THE SPECIFIED CHANNELS */
+        Dictionary<string, byte[]> hashedMasterKeys = new Dictionary<string, byte[]>();
+
+        private void GenerateKey_IF100_Click(object sender, EventArgs e) {
+            if(IF100_Master_TextBox.Text != "") {
+                hashedMasterKeys["IF100"] = hashWithSHA512(IF100_Master_TextBox.Text);
+                logs.AppendText("Master Key for IF100 successfully generated.\n");
+                IF100_Channel_Logs.Enabled = true;
+                IF100_GenerateKey_Button.Enabled = false;
+                IF100_Master_TextBox.Enabled = false;
+			}
+			else {
+                logs.AppendText("Please enter a key for IF100 channel!\n");
+            }
+		}
+
+		private void MATH101_GenerateKey_Button_Click(object sender, EventArgs e) {
+            if (MATH101_Master_TextBox.Text != "") {
+                hashedMasterKeys["MATH101"] = hashWithSHA512(MATH101_Master_TextBox.Text);
+                logs.AppendText("Master Key for MATH101 successfully generated.\n");
+                MATH101_Channel_Logs.Enabled = true;
+                MATH101_GenerateKey_Button.Enabled = false;
+                MATH101_Master_TextBox.Enabled = false;
+            }
+            else {
+                logs.AppendText("Please enter a key for MATH101 channel!\n");
+            }
+        }
+
+		private void GenerateKey_SPS101_Click(object sender, EventArgs e) {
+            if (SPS101_Master_TextBox.Text != "") {
+                hashedMasterKeys["SPS101"] = hashWithSHA512(SPS101_Master_TextBox.Text);
+                logs.AppendText("Master Key for SPS101 successfully generated.\n");
+                SPS101_Channel_Logs.Enabled = true;
+                SPS101_GenerateKey_Button.Enabled = false;
+                SPS101_Master_TextBox.Enabled = false;
+            }
+            else {
+                logs.AppendText("Please enter a key for SPS101 channel!\n");
+            }
+        }
+	}
 }

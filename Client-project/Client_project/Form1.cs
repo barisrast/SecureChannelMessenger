@@ -284,6 +284,7 @@ namespace Client_project
                     // Receive the RSA signature from the server
                     byte[] signatureBuffer = new byte[384];
                     clientSocket.Receive(signatureBuffer);
+                    logs.AppendText("Recieved RSA signature: " + Convert.ToBase64String(signatureBuffer) + "\n\n");
 
                     // Extract AES key and IV from the hashed password bytes
                     byte[] hashedPasswordBytes = hexStringToByteArray(hashedString);
@@ -298,12 +299,34 @@ namespace Client_project
                         logs.AppendText("RSA Signature is valid.\n");
 
                         try {
-                            // Decrypt the authentication message
+                            // Decrypt the authentication message and encrypted keys and IV
                             byte[] encryptedBytes = Convert.FromBase64String(encryptedString);
                             byte[] decryptedBytes = decryptWithAES128(encryptedBytes, aesKey, aesIV);
-                            string decryptedString = Encoding.UTF8.GetString(decryptedBytes);
 
-                            logs.AppendText("Decrypted message: " + decryptedString + "\n");
+                            // Separate the success message from the encrypted keys and IV
+                            string decryptedString = Encoding.UTF8.GetString(decryptedBytes);
+                            string[] parts = decryptedString.Split(new string[] { "||" }, StringSplitOptions.None);
+                            string successMessage = parts[0];
+                            string encryptedKeysAndIV = parts.Length > 1 ? parts[1] : null;
+
+                            // If there are encrypted keys and IV, decrypt them
+                            if (encryptedKeysAndIV != null) {
+                                byte[] encryptedKeysAndIVBytes = Convert.FromBase64String(encryptedKeysAndIV);
+                                byte[] decryptedKeysAndIVBytes = decryptWithAES128(encryptedKeysAndIVBytes, aesKey, aesIV);
+
+                                // Load the keys and IV for secure channel communication...
+                                // Assume the first 16 bytes are the AES key, the next 16 bytes are the IV, and the remaining bytes are the HMAC key
+                                byte[] channelAESKey = new byte[16];
+                                byte[] channelIV = new byte[16];
+                                byte[] channelHMACKey = new byte[decryptedKeysAndIVBytes.Length - 32];
+                                Buffer.BlockCopy(decryptedKeysAndIVBytes, 0, channelAESKey, 0, 16);
+                                Buffer.BlockCopy(decryptedKeysAndIVBytes, 16, channelIV, 0, 16);
+                                Buffer.BlockCopy(decryptedKeysAndIVBytes, 32, channelHMACKey, 0, channelHMACKey.Length);
+
+                                logs.AppendText("Loaded keys and IV for secure channel communication.\n");
+                            }
+
+                            logs.AppendText("Decrypted message: " + successMessage + "\n");
                         }
                         catch (Exception ex) {
                             logs.AppendText("Password is incorrect, try again.\n");
@@ -312,6 +335,7 @@ namespace Client_project
                     else {
                         logs.AppendText("RSA Signature is NOT valid.\n");
                     }
+
 
 
                 }
@@ -407,7 +431,7 @@ namespace Client_project
         }
 
 
-	}
+    }
 
 
 }
