@@ -286,7 +286,7 @@ namespace Server
                                 if (hashedMasterKeys.ContainsKey(currentUserChannel)) {
                                     socketList[newClient] = usernameString;
                                     logs.AppendText("\nRetrieved Master Key: " + BitConverter.ToString(hashedMasterKeys[currentUserChannel]).Replace("-", ""));
-                                    logs.AppendText(usernameString + " authenticated!\n");
+                                    logs.AppendText("\n"+usernameString + " authenticated!\n");
 
                                     // Get the hashed master key bytes for the user's channel
                                     byte[] hashedMasterKeyBytes = hashedMasterKeys[currentUserChannel];
@@ -324,63 +324,65 @@ namespace Server
                                     logs.AppendText("HMAC Key for Channel: " + generateHexStringFromByteArray(hmacKeyForChannel) + "\n");
 
 
-                                    /* BROADCAST */
-                                    Byte[] broadCastFromClient = new Byte[4096];
-                                    newClient.Receive(broadCastFromClient);
-
-                                    string incomingMessageFromSender = Encoding.Default.GetString(broadCastFromClient).Trim('\0');
-                                    string senderChannel = users[socketList[newClient]].Channel;
-
-                                    string[] splitMessage = incomingMessageFromSender.Split(':');
-
-                                    string encryptedMessageHex = splitMessage[0];
-                                    string receivedHmacHex = splitMessage[1];
-
-                                    byte[] to_be_dec = hexStringToByteArray(encryptedMessageHex);
-                                    byte[] to_be_check = hexStringToByteArray(receivedHmacHex);
-
-                                    string str_dec = Encoding.Default.GetString(to_be_dec).Trim('\0');
-                                    string str_check = Encoding.Default.GetString(to_be_check).Trim('\0');
-
-                                    byte[] dec_byte = decryptWithAES128(str_dec, aesKeyForChannel, ivForChannel);
-
-                                    string to_be_check_hmac = Encoding.Default.GetString(dec_byte).Trim('\0');
-                                    byte[] hmac_checked = applyHMACwithSHA512(to_be_check_hmac, hmacKeyForChannel);
-
-                                    string to_be_check_hmac_with_received = Encoding.Default.GetString(hmac_checked).Trim('\0');
-                                    string msg;
-
-                                    if (to_be_check_hmac_with_received == str_check) {
-                                        msg = ("Decrypted message: " + to_be_check_hmac + "\n");
-                                   }
-                                    else {
-                                        msg = ("Error: HMAC verification failed\n");
-                                    }
+									/* BROADCAST */
 
 
-                                    if (senderChannel == "IF100") {
-                                        IF100_Channel_Logs.AppendText("Message received from " + usernameString + "\n");
-                                        IF100_Channel_Logs.AppendText(incomingMessageFromSender + "\n" + msg + "\n");
-                                    }
-                                    else if (senderChannel == "MATH101") {
-                                        MATH101_Channel_Logs.AppendText("Message received from " + usernameString + "\n");
-                                        MATH101_Channel_Logs.AppendText(incomingMessageFromSender + "\n" + msg  + "\n");
+                                        Byte[] broadCastFromClient = new Byte[256];
+                                        newClient.Receive(broadCastFromClient);
 
-                                    }
-                                    else if (senderChannel == "SPS101") {
-                                        SPS101_Channel_Logs.AppendText("Message received from " + usernameString + "\n");
-                                        SPS101_Channel_Logs.AppendText(incomingMessageFromSender + "\n" + msg + "\n");
-                                    }
+                                        string incomingMessageFromSender = Encoding.Default.GetString(broadCastFromClient).Trim('\0');
+                                        string senderChannel = users[socketList[newClient]].Channel;
 
-                                    // Iterate through all connected clients
-                                    foreach (KeyValuePair<Socket, string> entry in socketList) {
-                                        // If the client is subscribed to the same channel as the sender
-                                        if (users[entry.Value].Channel == senderChannel) {
-                                            // Send the original message
-                                            entry.Key.Send(broadCastFromClient);
+                                        string[] splitMessage = incomingMessageFromSender.Split(':');
+
+                                        string encryptedMessageHex = splitMessage[0];
+                                        string receivedHmacHex = splitMessage[1];
+
+                                        byte[] to_be_dec = hexStringToByteArray(encryptedMessageHex);
+                                        byte[] to_be_check = hexStringToByteArray(receivedHmacHex);
+
+                                        string str_dec = Encoding.Default.GetString(to_be_dec).Trim('\0');
+                                        string str_check = Encoding.Default.GetString(to_be_check).Trim('\0');
+
+                                        byte[] dec_byte = decryptWithAES128(str_dec, aesKeyForChannel, ivForChannel);
+
+                                        string to_be_check_hmac = Encoding.Default.GetString(dec_byte).Trim('\0');
+                                        byte[] hmac_checked = applyHMACwithSHA512(to_be_check_hmac, hmacKeyForChannel);
+
+                                        string to_be_check_hmac_with_received = Encoding.Default.GetString(hmac_checked).Trim('\0');
+                                        string msg;
+
+                                        if (to_be_check_hmac_with_received == str_check) {
+                                            msg = ("Decrypted message: " + to_be_check_hmac + "\n");
+                                       }
+                                        else {
+                                            msg = ("Error: HMAC verification failed\n");
                                         }
-                                    }
 
+
+                                        if (senderChannel == "IF100") {
+                                            IF100_Channel_Logs.AppendText("Message received from " + usernameString + "\n");
+                                            IF100_Channel_Logs.AppendText(incomingMessageFromSender + "\n" + msg + "\n");
+                                        }
+                                        else if (senderChannel == "MATH101") {
+                                            MATH101_Channel_Logs.AppendText("Message received from " + usernameString + "\n");
+                                            MATH101_Channel_Logs.AppendText(incomingMessageFromSender + "\n" + msg  + "\n");
+
+                                        }
+                                        else if (senderChannel == "SPS101") {
+                                            SPS101_Channel_Logs.AppendText("Message received from " + usernameString + "\n");
+                                            SPS101_Channel_Logs.AppendText(incomingMessageFromSender + "\n" + msg + "\n");
+                                        }
+
+                                        // Iterate through all connected clients
+                                        foreach (KeyValuePair<Socket, string> entry in socketList) {
+                                            // If the client is subscribed to the same channel as the sender
+                                            if (users[entry.Value].Channel == senderChannel) {
+                                                // Send the original message
+                                                entry.Key.Send(broadCastFromClient);
+                                            }
+                                        }
+                                    
                                 }
                                 else {
                                     // Channel keys and IV are not available

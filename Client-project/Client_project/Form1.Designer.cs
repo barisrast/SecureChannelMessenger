@@ -155,6 +155,7 @@ namespace Client_project
 			this.password_field.PasswordChar = '*';
 			this.password_field.Size = new System.Drawing.Size(100, 20);
 			this.password_field.TabIndex = 13;
+			this.password_field.UseSystemPasswordChar = true;
 			// 
 			// label5
 			// 
@@ -188,6 +189,7 @@ namespace Client_project
 			this.password_login_field.Name = "password_login_field";
 			this.password_login_field.Size = new System.Drawing.Size(100, 20);
 			this.password_login_field.TabIndex = 17;
+			this.password_login_field.UseSystemPasswordChar = true;
 			// 
 			// label6
 			// 

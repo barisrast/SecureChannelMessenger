@@ -132,9 +132,11 @@ namespace Client_project
   private void Receive()
         {
             while (connected)
-            {
+            {   
                 try
                 {
+
+
                     // Receive the combined length first
                     byte[] combinedLengthBytes = new byte[4];
                     clientSocket.Receive(combinedLengthBytes);
@@ -337,6 +339,7 @@ namespace Client_project
                                 logs.AppendText("Loaded keys and IV for secure channel communication!\n");
                                 sendMessage_TextBox.Enabled = true;
                                 sendMessage_button.Enabled = true;
+
                             }
 
                             logs.AppendText("Decrypted message: " + successMessage + "\n");
