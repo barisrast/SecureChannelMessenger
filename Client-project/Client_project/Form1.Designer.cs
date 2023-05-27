@@ -53,10 +53,10 @@ namespace Client_project
 			this.login_ip_field = new System.Windows.Forms.TextBox();
 			this.label9 = new System.Windows.Forms.Label();
 			this.label10 = new System.Windows.Forms.Label();
-			this.textBox1 = new System.Windows.Forms.TextBox();
-			this.button1 = new System.Windows.Forms.Button();
+			this.sendMessage_TextBox = new System.Windows.Forms.TextBox();
+			this.sendMessage_button = new System.Windows.Forms.Button();
 			this.label11 = new System.Windows.Forms.Label();
-			this.richTextBox1 = new System.Windows.Forms.RichTextBox();
+			this.EnrolledChannel_logs = new System.Windows.Forms.RichTextBox();
 			this.label12 = new System.Windows.Forms.Label();
 			this.SuspendLayout();
 			// 
@@ -259,21 +259,24 @@ namespace Client_project
 			this.label10.TabIndex = 25;
 			this.label10.Text = "Port:";
 			// 
-			// textBox1
+			// sendMessage_TextBox
 			// 
-			this.textBox1.Location = new System.Drawing.Point(60, 381);
-			this.textBox1.Name = "textBox1";
-			this.textBox1.Size = new System.Drawing.Size(151, 20);
-			this.textBox1.TabIndex = 26;
+			this.sendMessage_TextBox.Enabled = false;
+			this.sendMessage_TextBox.Location = new System.Drawing.Point(60, 381);
+			this.sendMessage_TextBox.Name = "sendMessage_TextBox";
+			this.sendMessage_TextBox.Size = new System.Drawing.Size(151, 20);
+			this.sendMessage_TextBox.TabIndex = 26;
 			// 
-			// button1
+			// sendMessage_button
 			// 
-			this.button1.Location = new System.Drawing.Point(217, 379);
-			this.button1.Name = "button1";
-			this.button1.Size = new System.Drawing.Size(75, 23);
-			this.button1.TabIndex = 27;
-			this.button1.Text = "Send";
-			this.button1.UseVisualStyleBackColor = true;
+			this.sendMessage_button.Enabled = false;
+			this.sendMessage_button.Location = new System.Drawing.Point(217, 379);
+			this.sendMessage_button.Name = "sendMessage_button";
+			this.sendMessage_button.Size = new System.Drawing.Size(75, 23);
+			this.sendMessage_button.TabIndex = 27;
+			this.sendMessage_button.Text = "Send";
+			this.sendMessage_button.UseVisualStyleBackColor = true;
+			this.sendMessage_button.Click += new System.EventHandler(this.sendMessage_button_Click);
 			// 
 			// label11
 			// 
@@ -284,13 +287,14 @@ namespace Client_project
 			this.label11.TabIndex = 28;
 			this.label11.Text = "Send a message to a channel";
 			// 
-			// richTextBox1
+			// EnrolledChannel_logs
 			// 
-			this.richTextBox1.Location = new System.Drawing.Point(320, 381);
-			this.richTextBox1.Name = "richTextBox1";
-			this.richTextBox1.Size = new System.Drawing.Size(229, 96);
-			this.richTextBox1.TabIndex = 29;
-			this.richTextBox1.Text = "";
+			this.EnrolledChannel_logs.Location = new System.Drawing.Point(320, 381);
+			this.EnrolledChannel_logs.Name = "EnrolledChannel_logs";
+			this.EnrolledChannel_logs.ReadOnly = true;
+			this.EnrolledChannel_logs.Size = new System.Drawing.Size(229, 96);
+			this.EnrolledChannel_logs.TabIndex = 29;
+			this.EnrolledChannel_logs.Text = "";
 			// 
 			// label12
 			// 
@@ -307,10 +311,10 @@ namespace Client_project
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(588, 505);
 			this.Controls.Add(this.label12);
-			this.Controls.Add(this.richTextBox1);
+			this.Controls.Add(this.EnrolledChannel_logs);
 			this.Controls.Add(this.label11);
-			this.Controls.Add(this.button1);
-			this.Controls.Add(this.textBox1);
+			this.Controls.Add(this.sendMessage_button);
+			this.Controls.Add(this.sendMessage_TextBox);
 			this.Controls.Add(this.label10);
 			this.Controls.Add(this.label9);
 			this.Controls.Add(this.login_ip_field);
@@ -366,10 +370,10 @@ namespace Client_project
         private TextBox login_ip_field;
         private Label label9;
         private Label label10;
-		private TextBox textBox1;
-		private Button button1;
+		private TextBox sendMessage_TextBox;
+		private Button sendMessage_button;
 		private Label label11;
-		private RichTextBox richTextBox1;
+		private RichTextBox EnrolledChannel_logs;
 		private Label label12;
 	}
 }

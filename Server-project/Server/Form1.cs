@@ -29,7 +29,14 @@ namespace Server
 
         Socket serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         Socket remoteSocket;
-        List<Socket> socketList = new List<Socket>();
+
+        public class UserData {
+            public string Channel { get; set; }
+        }
+
+
+        Dictionary<Socket, string> socketList = new Dictionary<Socket, string>(); //Socket, Username
+        static Dictionary<string, UserData> users = new Dictionary<string, UserData>(); // Username, UserData
 
         public Form1()
         {
@@ -90,8 +97,8 @@ namespace Server
             {
                 try
                 {
-                    //socketList.Add(serverSocket.Accept());
                     Socket newClient = serverSocket.Accept();
+                    socketList.Add(newClient, "");
                     //before accepting the connection, server needs to get the username-password info, decrypt them and do the necessary comparisons
                     Byte[] receivedData2 = new Byte[384];
                     newClient.Receive(receivedData2);
@@ -248,6 +255,9 @@ namespace Server
                                 if (usernameDatabase == usernameString) {
                                     currentUserPasswordHash = databaseToken[1];
                                     currentUserChannel = databaseToken[2];
+
+                                    UserData userData = new UserData { Channel = currentUserChannel };
+                                    users[usernameDatabase] = userData;
                                     break;
                                 }
                             }
@@ -266,7 +276,7 @@ namespace Server
                             byte[] hmacPasswordResult = applyHMACwithSHA512(randomString, lowerQuarterBytes);
 
                             string varVar = generateHexStringFromByteArray(hmacPasswordResult);
-                            logs.AppendText("Server's result of the HMAC of random number: " + varVar + "\n");
+                            logs.AppendText("\nServer's result of the HMAC of random number: " + varVar + "\n");
                             string hmac1 = Encoding.UTF8.GetString(hmacPasswordResult);
                             string hmac2 = Encoding.UTF8.GetString(hmacByteBuffer);
 
@@ -274,8 +284,9 @@ namespace Server
                             //If the HMACs are equal, we understand that the client sent the correct password
                             if (hmac1 == hmac2) {
                                 if (hashedMasterKeys.ContainsKey(currentUserChannel)) {
-                                    logs.AppendText("Retrieved Master Key: " + BitConverter.ToString(hashedMasterKeys[currentUserChannel]).Replace("-", ""));
-                                    logs.AppendText(usernameString + " authenticated.\n");
+                                    socketList[newClient] = usernameString;
+                                    logs.AppendText("\nRetrieved Master Key: " + BitConverter.ToString(hashedMasterKeys[currentUserChannel]).Replace("-", ""));
+                                    logs.AppendText(usernameString + " authenticated!\n");
 
                                     // Get the hashed master key bytes for the user's channel
                                     byte[] hashedMasterKeyBytes = hashedMasterKeys[currentUserChannel];
@@ -311,6 +322,65 @@ namespace Server
                                     logs.AppendText("AES Key for Channel: " + generateHexStringFromByteArray(aesKeyForChannel) + "\n");
                                     logs.AppendText("IV for Channel: " + generateHexStringFromByteArray(ivForChannel) + "\n");
                                     logs.AppendText("HMAC Key for Channel: " + generateHexStringFromByteArray(hmacKeyForChannel) + "\n");
+
+
+                                    /* BROADCAST */
+                                    Byte[] broadCastFromClient = new Byte[4096];
+                                    newClient.Receive(broadCastFromClient);
+
+                                    string incomingMessageFromSender = Encoding.Default.GetString(broadCastFromClient).Trim('\0');
+                                    string senderChannel = users[socketList[newClient]].Channel;
+
+                                    string[] splitMessage = incomingMessageFromSender.Split(':');
+
+                                    string encryptedMessageHex = splitMessage[0];
+                                    string receivedHmacHex = splitMessage[1];
+
+                                    byte[] to_be_dec = hexStringToByteArray(encryptedMessageHex);
+                                    byte[] to_be_check = hexStringToByteArray(receivedHmacHex);
+
+                                    string str_dec = Encoding.Default.GetString(to_be_dec).Trim('\0');
+                                    string str_check = Encoding.Default.GetString(to_be_check).Trim('\0');
+
+                                    byte[] dec_byte = decryptWithAES128(str_dec, aesKeyForChannel, ivForChannel);
+
+                                    string to_be_check_hmac = Encoding.Default.GetString(dec_byte).Trim('\0');
+                                    byte[] hmac_checked = applyHMACwithSHA512(to_be_check_hmac, hmacKeyForChannel);
+
+                                    string to_be_check_hmac_with_received = Encoding.Default.GetString(hmac_checked).Trim('\0');
+                                    string msg;
+
+                                    if (to_be_check_hmac_with_received == str_check) {
+                                        msg = ("Decrypted message: " + to_be_check_hmac + "\n");
+                                   }
+                                    else {
+                                        msg = ("Error: HMAC verification failed\n");
+                                    }
+
+
+                                    if (senderChannel == "IF100") {
+                                        IF100_Channel_Logs.AppendText("Message received from " + usernameString + "\n");
+                                        IF100_Channel_Logs.AppendText(incomingMessageFromSender + "\n" + msg + "\n");
+                                    }
+                                    else if (senderChannel == "MATH101") {
+                                        MATH101_Channel_Logs.AppendText("Message received from " + usernameString + "\n");
+                                        MATH101_Channel_Logs.AppendText(incomingMessageFromSender + "\n" + msg  + "\n");
+
+                                    }
+                                    else if (senderChannel == "SPS101") {
+                                        SPS101_Channel_Logs.AppendText("Message received from " + usernameString + "\n");
+                                        SPS101_Channel_Logs.AppendText(incomingMessageFromSender + "\n" + msg + "\n");
+                                    }
+
+                                    // Iterate through all connected clients
+                                    foreach (KeyValuePair<Socket, string> entry in socketList) {
+                                        // If the client is subscribed to the same channel as the sender
+                                        if (users[entry.Value].Channel == senderChannel) {
+                                            // Send the original message
+                                            entry.Key.Send(broadCastFromClient);
+                                        }
+                                    }
+
                                 }
                                 else {
                                     // Channel keys and IV are not available
@@ -356,6 +426,7 @@ namespace Server
 
                     }
 
+
                 }
                 catch
                 {
@@ -383,9 +454,9 @@ namespace Server
                     Byte[] buffer = new Byte[384];
                     s.Receive(buffer);
 
-                    string incomingMessage = Encoding.UTF8.GetString(buffer);
-                    incomingMessage = incomingMessage.Substring(0, incomingMessage.IndexOf("\0"));
-                    logs.AppendText(incomingMessage + "\n");
+                   string incomingMessage = Encoding.UTF8.GetString(buffer);
+                   incomingMessage = incomingMessage.Substring(0, incomingMessage.IndexOf("\0"));
+                   logs.AppendText(incomingMessage + "\n");              
                 }
 
                 catch
@@ -506,7 +577,38 @@ namespace Server
 
             return result;
         }
+        static byte[] decryptWithAES128(string input, byte[] key, byte[] IV) {
+            // convert input string to byte array
+            byte[] byteInput = Encoding.Default.GetBytes(input);
 
+            // create AES object from System.Security.Cryptography
+            RijndaelManaged aesObject = new RijndaelManaged();
+            // since we want to use AES-128
+            aesObject.KeySize = 128;
+            // block size of AES is 128 bits
+            aesObject.BlockSize = 128;
+            // mode -> CipherMode.*
+            aesObject.Mode = CipherMode.CFB;
+            // feedback size should be equal to block size
+            // aesObject.FeedbackSize = 128;
+            // set the key
+            aesObject.Key = key;
+            // set the IV
+            aesObject.IV = IV;
+            // create an encryptor with the settings provided
+            ICryptoTransform decryptor = aesObject.CreateDecryptor();
+            byte[] result = null;
+
+            try {
+                result = decryptor.TransformFinalBlock(byteInput, 0, byteInput.Length);
+            }
+            catch (Exception e) // if encryption fails
+            {
+                Console.WriteLine(e.Message); // display the cause
+            }
+
+            return result;
+        }
 
         /* MASTER KEY GENERATOR FUNCTIONS FOR THE SPECIFIED CHANNELS */
         Dictionary<string, byte[]> hashedMasterKeys = new Dictionary<string, byte[]>();

@@ -96,6 +96,7 @@
 			this.IF100_Channel_Logs.Enabled = false;
 			this.IF100_Channel_Logs.Location = new System.Drawing.Point(171, 92);
 			this.IF100_Channel_Logs.Name = "IF100_Channel_Logs";
+			this.IF100_Channel_Logs.ReadOnly = true;
 			this.IF100_Channel_Logs.Size = new System.Drawing.Size(206, 106);
 			this.IF100_Channel_Logs.TabIndex = 11;
 			this.IF100_Channel_Logs.Text = "";
@@ -105,6 +106,7 @@
 			this.SPS101_Channel_Logs.Enabled = false;
 			this.SPS101_Channel_Logs.Location = new System.Drawing.Point(171, 377);
 			this.SPS101_Channel_Logs.Name = "SPS101_Channel_Logs";
+			this.SPS101_Channel_Logs.ReadOnly = true;
 			this.SPS101_Channel_Logs.Size = new System.Drawing.Size(206, 106);
 			this.SPS101_Channel_Logs.TabIndex = 12;
 			this.SPS101_Channel_Logs.Text = "";
@@ -114,6 +116,7 @@
 			this.MATH101_Channel_Logs.Enabled = false;
 			this.MATH101_Channel_Logs.Location = new System.Drawing.Point(171, 233);
 			this.MATH101_Channel_Logs.Name = "MATH101_Channel_Logs";
+			this.MATH101_Channel_Logs.ReadOnly = true;
 			this.MATH101_Channel_Logs.Size = new System.Drawing.Size(206, 106);
 			this.MATH101_Channel_Logs.TabIndex = 13;
 			this.MATH101_Channel_Logs.Text = "";
@@ -165,6 +168,7 @@
 			this.IF100_Master_TextBox.Name = "IF100_Master_TextBox";
 			this.IF100_Master_TextBox.Size = new System.Drawing.Size(100, 20);
 			this.IF100_Master_TextBox.TabIndex = 20;
+			this.IF100_Master_TextBox.UseSystemPasswordChar = true;
 			// 
 			// MATH101_Master_TextBox
 			// 
@@ -173,6 +177,7 @@
 			this.MATH101_Master_TextBox.Name = "MATH101_Master_TextBox";
 			this.MATH101_Master_TextBox.Size = new System.Drawing.Size(100, 20);
 			this.MATH101_Master_TextBox.TabIndex = 21;
+			this.MATH101_Master_TextBox.UseSystemPasswordChar = true;
 			// 
 			// SPS101_Master_TextBox
 			// 
@@ -181,6 +186,7 @@
 			this.SPS101_Master_TextBox.Name = "SPS101_Master_TextBox";
 			this.SPS101_Master_TextBox.Size = new System.Drawing.Size(100, 20);
 			this.SPS101_Master_TextBox.TabIndex = 22;
+			this.SPS101_Master_TextBox.UseSystemPasswordChar = true;
 			// 
 			// IF100_GenerateKey_Button
 			// 

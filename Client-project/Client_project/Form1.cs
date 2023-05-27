@@ -25,6 +25,10 @@ namespace Client_project
         string RSA3072PublicEncryptionKey;
         string RSA3072PublicVerificationKey;
 
+        byte[] g_aesKeyForChannelEnrolled;
+        byte[] g_ivForChannelEnrolled;
+        byte[] g_hmacKeyForChannelEnrolled;
+
         public Form1()
         {
             Control.CheckForIllegalCrossThreadCalls = false;
@@ -125,7 +129,7 @@ namespace Client_project
 
         }
 
-        private void Receive()
+  private void Receive()
         {
             while (connected)
             {
@@ -194,7 +198,6 @@ namespace Client_project
                 }
             }
         }
-
 
 
 
@@ -322,12 +325,18 @@ namespace Client_project
                                 Buffer.BlockCopy(decryptedKeysAndIVBytes, 16, channelIV, 0, 16);
                                 Buffer.BlockCopy(decryptedKeysAndIVBytes, 32, channelHMACKey, 0, channelHMACKey.Length);
 
+                                g_aesKeyForChannelEnrolled = channelAESKey;
+                                g_ivForChannelEnrolled = channelIV;
+                                g_hmacKeyForChannelEnrolled = channelHMACKey;
+
                                 // Log the keys and IV for the channel
                                 logs.AppendText("Channel AES Key: " + BitConverter.ToString(channelAESKey).Replace("-", "") + "\n");
                                 logs.AppendText("Channel IV: " + BitConverter.ToString(channelIV).Replace("-", "") + "\n");
                                 logs.AppendText("Channel HMAC Key: " + BitConverter.ToString(channelHMACKey).Replace("-", "") + "\n");
 
                                 logs.AppendText("Loaded keys and IV for secure channel communication!\n");
+                                sendMessage_TextBox.Enabled = true;
+                                sendMessage_button.Enabled = true;
                             }
 
                             logs.AppendText("Decrypted message: " + successMessage + "\n");
@@ -381,6 +390,38 @@ namespace Client_project
             return result;
         }
         // encryption with AES-128
+        static byte[] encryptWithAES128(string input, byte[] key, byte[] IV) {
+            // convert input string to byte array
+            byte[] byteInput = Encoding.Default.GetBytes(input);
+
+            // create AES object from System.Security.Cryptography
+            RijndaelManaged aesObject = new RijndaelManaged();
+            // since we want to use AES-128
+            aesObject.KeySize = 128;
+            // block size of AES is 128 bits
+            aesObject.BlockSize = 128;
+            // mode -> CipherMode.*
+            aesObject.Mode = CipherMode.CFB;
+            // feedback size should be equal to block size
+            aesObject.FeedbackSize = 128;
+            // set the key
+            aesObject.Key = key;
+            // set the IV
+            aesObject.IV = IV;
+            // create an encryptor with the settings provided
+            ICryptoTransform encryptor = aesObject.CreateEncryptor();
+            byte[] result = null;
+
+            try {
+                result = encryptor.TransformFinalBlock(byteInput, 0, byteInput.Length);
+            }
+            catch (Exception e) // if encryption fails
+            {
+                Console.WriteLine(e.Message); // display the cause
+            }
+
+            return result;
+        }
         static byte[] decryptWithAES128(byte[] byteInput, byte[] key, byte[] IV) {
             // create AES object from System.Security.Cryptography
             RijndaelManaged aesObject = new RijndaelManaged();
@@ -432,8 +473,26 @@ namespace Client_project
             return result;
         }
 
+		private void sendMessage_button_Click(object sender, EventArgs e) {
+            if (sendMessage_TextBox.Text != "") {
+                string message_to_channel = sendMessage_TextBox.Text;
+                byte[] encrypted_sended_message = encryptWithAES128(message_to_channel, g_aesKeyForChannelEnrolled, g_ivForChannelEnrolled);
+                byte[] hmaced_message = applyHMACwithSHA512(message_to_channel, g_hmacKeyForChannelEnrolled);
 
-    }
+                string hex_hmac = generateHexStringFromByteArray(hmaced_message);
+                string hex_encryp = generateHexStringFromByteArray(encrypted_sended_message);
+
+                Byte[] buffer = new Byte[4096];
+                buffer = Encoding.Default.GetBytes(hex_encryp + ":" + hex_hmac);
+                EnrolledChannel_logs.AppendText("Message to distrubuted sended to the server: " + hex_encryp + ":" + hex_hmac + "\n");
+                clientSocket.Send(buffer);
+                sendMessage_TextBox.Clear();
+            }
+            else {
+                EnrolledChannel_logs.AppendText("Message cannot be empty \n");
+            }
+        }
+	}
 
 
 }
