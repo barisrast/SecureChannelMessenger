@@ -309,10 +309,9 @@ namespace Client_project
                             string successMessage = parts[0];
                             string encryptedKeysAndIV = parts.Length > 1 ? parts[1] : null;
 
-                            // If there are encrypted keys and IV, decrypt them
+                            // If there are keys and IV, convert them from hex string to byte array
                             if (encryptedKeysAndIV != null) {
-                                byte[] encryptedKeysAndIVBytes = Convert.FromBase64String(encryptedKeysAndIV);
-                                byte[] decryptedKeysAndIVBytes = decryptWithAES128(encryptedKeysAndIVBytes, aesKey, aesIV);
+                                byte[] decryptedKeysAndIVBytes = hexStringToByteArray(encryptedKeysAndIV);
 
                                 // Load the keys and IV for secure channel communication...
                                 // Assume the first 16 bytes are the AES key, the next 16 bytes are the IV, and the remaining bytes are the HMAC key
@@ -323,7 +322,12 @@ namespace Client_project
                                 Buffer.BlockCopy(decryptedKeysAndIVBytes, 16, channelIV, 0, 16);
                                 Buffer.BlockCopy(decryptedKeysAndIVBytes, 32, channelHMACKey, 0, channelHMACKey.Length);
 
-                                logs.AppendText("Loaded keys and IV for secure channel communication.\n");
+                                // Log the keys and IV for the channel
+                                logs.AppendText("Channel AES Key: " + BitConverter.ToString(channelAESKey).Replace("-", "") + "\n");
+                                logs.AppendText("Channel IV: " + BitConverter.ToString(channelIV).Replace("-", "") + "\n");
+                                logs.AppendText("Channel HMAC Key: " + BitConverter.ToString(channelHMACKey).Replace("-", "") + "\n");
+
+                                logs.AppendText("Loaded keys and IV for secure channel communication!\n");
                             }
 
                             logs.AppendText("Decrypted message: " + successMessage + "\n");
@@ -335,8 +339,6 @@ namespace Client_project
                     else {
                         logs.AppendText("RSA Signature is NOT valid.\n");
                     }
-
-
 
                 }
                 catch

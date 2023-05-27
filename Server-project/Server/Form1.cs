@@ -289,22 +289,20 @@ namespace Server
                                     Buffer.BlockCopy(hashedMasterKeyBytes, 16, ivForChannel, 0, 16);
                                     Buffer.BlockCopy(hashedMasterKeyBytes, 32, hmacKeyForChannel, 0, 16);
 
-                                    // Encrypt these keys and IV using AES-128 encryption with the key and IV derived from client's password
-                                    string toBeEncrypted = generateHexStringFromByteArray(aesKeyForChannel) + generateHexStringFromByteArray(ivForChannel) + generateHexStringFromByteArray(hmacKeyForChannel);
-                                    byte[] encryptedChannelKeys = encryptWithAES128(toBeEncrypted, aesKey, aesIV);
 
-                                    // Append encrypted keys and IV to the success message
-                                    string successString = "Authentication successful";
-                                    string encryptedChannelKeysBase64 = Convert.ToBase64String(encryptedChannelKeys);
-                                    string messageWithKeys = successString + encryptedChannelKeysBase64;
+                                    // Encrypt the success message, delimiter, keys and IV using AES-128 encryption with the key and IV derived from client's password
+                                    string toBeEncrypted = "Authentication successful||" + generateHexStringFromByteArray(aesKeyForChannel) + generateHexStringFromByteArray(ivForChannel) + generateHexStringFromByteArray(hmacKeyForChannel);
+                                    byte[] encryptedMessageWithKeys = encryptWithAES128(toBeEncrypted, aesKey, aesIV);
 
-                                    // Sign the message (containing the success message and encrypted data) with the server's RSA key
-                                    byte[] messageWithKeysBytes = Encoding.UTF8.GetBytes(messageWithKeys);
-                                    byte[] signature = signWithRSA(messageWithKeys, 3072, RSA3072PrivateVerificationKey);
+                                    // Convert the encrypted message to base64 string
+                                    string encryptedMessageWithKeysBase64 = Convert.ToBase64String(encryptedMessageWithKeys);
 
-                                    // Send the message (containing the success message and encrypted data) and signature to the client
-                                    newClient.Send(messageWithKeysBytes);
-                                    logs.AppendText("Sending encrypted message with keys: " + messageWithKeys + "\n\n");
+                                    // Sign the base64 string with the server's RSA key
+                                    byte[] signature = signWithRSA(encryptedMessageWithKeysBase64, 3072, RSA3072PrivateVerificationKey);
+
+                                    // Send the encrypted message and signature to the client
+                                    newClient.Send(encryptedMessageWithKeys);
+                                    logs.AppendText("Sending encrypted message with keys: " + encryptedMessageWithKeysBase64 + "\n\n");
                                     newClient.Send(signature);
                                     logs.AppendText("Sending RSA signature: " + Convert.ToBase64String(signature) + "\n\n");
 
