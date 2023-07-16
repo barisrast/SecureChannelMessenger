@@ -1,0 +1,10 @@
+C:\Users\mertk\Source\Repos\cs432-project\Client-project\Client_project\bin\Debug\Client_project.exe.config
+C:\Users\mertk\Source\Repos\cs432-project\Client-project\Client_project\bin\Debug\Client_project.exe
+C:\Users\mertk\Source\Repos\cs432-project\Client-project\Client_project\bin\Debug\Client_project.pdb
+C:\Users\mertk\Source\Repos\cs432-project\Client-project\Client_project\obj\Debug\Client_project.csproj.AssemblyReference.cache
+C:\Users\mertk\Source\Repos\cs432-project\Client-project\Client_project\obj\Debug\Client_project.Form1.resources
+C:\Users\mertk\Source\Repos\cs432-project\Client-project\Client_project\obj\Debug\Client_project.Properties.Resources.resources
+C:\Users\mertk\Source\Repos\cs432-project\Client-project\Client_project\obj\Debug\Client_project.csproj.GenerateResource.cache
+C:\Users\mertk\Source\Repos\cs432-project\Client-project\Client_project\obj\Debug\Client_project.csproj.CoreCompileInputs.cache
+C:\Users\mertk\Source\Repos\cs432-project\Client-project\Client_project\obj\Debug\Client_project.exe
+C:\Users\mertk\Source\Repos\cs432-project\Client-project\Client_project\obj\Debug\Client_project.pdb

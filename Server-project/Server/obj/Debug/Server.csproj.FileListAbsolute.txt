@@ -1,0 +1,10 @@
+C:\Users\mertk\Source\Repos\cs432-project\Server-project\Server\bin\Debug\Server.exe.config
+C:\Users\mertk\Source\Repos\cs432-project\Server-project\Server\bin\Debug\Server.exe
+C:\Users\mertk\Source\Repos\cs432-project\Server-project\Server\bin\Debug\Server.pdb
+C:\Users\mertk\Source\Repos\cs432-project\Server-project\Server\obj\Debug\Server.csproj.AssemblyReference.cache
+C:\Users\mertk\Source\Repos\cs432-project\Server-project\Server\obj\Debug\Server.Form1.resources
+C:\Users\mertk\Source\Repos\cs432-project\Server-project\Server\obj\Debug\Server.Properties.Resources.resources
+C:\Users\mertk\Source\Repos\cs432-project\Server-project\Server\obj\Debug\Server.csproj.GenerateResource.cache
+C:\Users\mertk\Source\Repos\cs432-project\Server-project\Server\obj\Debug\Server.csproj.CoreCompileInputs.cache
+C:\Users\mertk\Source\Repos\cs432-project\Server-project\Server\obj\Debug\Server.exe
+C:\Users\mertk\Source\Repos\cs432-project\Server-project\Server\obj\Debug\Server.pdb
